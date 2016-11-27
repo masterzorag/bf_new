@@ -12,28 +12,28 @@ typedef struct {
 
 void scan(const u8 *item, const u8 *l, u8 mode)
 {
-  u8 *d = (u8*)item;
+  u8 *p = (u8*)item;
 
   for(u8 i=0; i<*l; i++)
   {
     switch(mode)
     {
        case 0:            // quiet
-          printf("%c", *d);
+          printf("%c", *p);
           break;
 
        case 1:
-          printf("%d/%d %c %2x\n", i, *l, *d, *d);
+          printf("%.2d/%.2d  %c  %.2x %.3d\n", i, *l, *p, *p, *p);
           break;
 
        case 2:
-          printf("%2x:", *d);
+          printf("%.2x ", *p);
           break;
 
        default :
           break;
     }
-    d++;
+    p++;
   }
   puts("");
 }
@@ -67,10 +67,70 @@ void change(u8 *item, u8 *i)
   p = NULL;
 }
 
+void parse_file(char *filename, ctx *ctx)
+{
+  FILE *fp;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  fp = fopen(filename, "r");
+  if(!fp) exit(EXIT_FAILURE);
+
+  u8 idx = 0;
+  while ((read = getline(&line, &len, fp)) != -1)
+  {
+    if(line[0] == '#') continue;  // skip commented (#) lines
+
+    switch(idx)
+    {
+      // setup charset
+      case 0:
+
+        ctx->c_len = strlen(line) -1;
+        ctx->cset  = malloc(ctx->c_len);
+        if(!ctx->cset) exit(-1);
+
+        strncpy((char*)ctx->cset, line, ctx->c_len);
+        ctx->cset[ctx->c_len] = '\0';
+
+        scan(ctx->cset, &ctx->c_len, 1);
+
+        idx++;
+        break;
+
+      // setup max use
+      case 1:
+        break;
+
+      case 2:
+        break;
+
+      default :
+        break;
+
+    }
+
+    printf("Retrieved line of length %zu :\n", read);
+    printf("%s %zu", line, strlen(line));
+
+  }
+  free(line);
+}
+
+
 
 int main(int argc, char **argv)
 {
   ctx job;
+
+  if(argv[2])
+  {
+    parse_file(argv[2], &job);
+
+    exit(0);
+  }
+
 
   if(argv[1]) {
 
@@ -83,8 +143,6 @@ int main(int argc, char **argv)
   } else {
     exit(-1);
   }
-
-  //printf("%lu %lu\n", sizeof(job), sizeof(u8));
 
   printf("%s %u\n", job.word, job.w_len);
 
@@ -101,7 +159,7 @@ int main(int argc, char **argv)
 
     printf("%s %d\r", job.word, job.w_len);
 
-    if(memcmp(job.word, "acqua", job.w_len) == 0) break;   
+    if(memcmp(job.word, "acqua", job.w_len) == 0) break;
 
     n = job.w_len -1;
     c++;
@@ -110,4 +168,6 @@ int main(int argc, char **argv)
   printf("%d\n", c);
 
   free(job.word);
+
+  return 0;
 }
