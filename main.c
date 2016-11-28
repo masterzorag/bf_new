@@ -3,14 +3,25 @@
 #include <string.h>
 #include "types.h"
 
+
 typedef struct {
-  u8 w_len;
-  u8 c_len;
+  u8 w_len;   // word lenght
+  u8 c_len;   // charset lenght
   u8 *word;
   u8 *cset;
+  u8 *R;      // Repetitions, max use
 } ctx;
 
-void scan(const u8 *item, const u8 *l, u8 mode)
+
+enum mode
+{
+  CHAR,
+  DUMP,
+  HEX,
+  STORE_IN
+};
+
+void scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
 {
   u8 *p = (u8*)item;
 
@@ -18,17 +29,24 @@ void scan(const u8 *item, const u8 *l, u8 mode)
   {
     switch(mode)
     {
-       case 0:            // quiet
+       case 0:    // output as CHAR
           printf("%c", *p);
           break;
 
-       case 1:
-          printf("%.2d/%.2d  %c  %.2x %.3d\n", i, *l, *p, *p, *p);
+       case 1:    // DUMP values
+          printf("%.2d/%.2d  %c  0x%.2x %.3d\n", i, *l, *p, *p, *p);
           break;
 
-       case 2:
+       case 2:    // output as HEX
           printf("%.2x ", *p);
           break;
+
+       case 3: {  // STORE_IN dst[c_len]
+          char t[2];
+          strncpy(t, (char*)p, 1), t[1] = '\0';
+          *(dst + i) = atoi(t);
+          printf("%.2d/%.2d  %c  0x%.2x -> %.2d\n", i, *l, *p, atoi(t), *(dst + i));
+          break; }
 
        default :
           break;
@@ -46,10 +64,10 @@ void change(u8 *item, u8 *i)
   {
     p = item + *i;
 
-    if(*p == 0x7a) {  //last
+    if(*p == 0x7a) {  //last    //ctx->c_len
       //printf("[%2x]", *p);
 
-      *p = 0x61;   // first
+      *p = 0x61;   // first     //ctx->cset
 
       // 0x21-0x7f A-z
       // 0x61-0x3a a-9
@@ -87,20 +105,28 @@ void parse_file(char *filename, ctx *ctx)
       // setup charset
       case 0:
 
-        ctx->c_len = strlen(line) -1;
+        ctx->c_len = strlen(line) /* trim newline unconditionally */ -1;
         ctx->cset  = malloc(ctx->c_len);
         if(!ctx->cset) exit(-1);
 
-        strncpy((char*)ctx->cset, line, ctx->c_len);
+        strncpy((char*)ctx->cset, line, ctx->c_len); // store
         ctx->cset[ctx->c_len] = '\0';
 
-        scan(ctx->cset, &ctx->c_len, 1);
+        scan(ctx->cset, &ctx->c_len, CHAR, NULL);    // report
 
         idx++;
         break;
 
-      // setup max use
+      // setup Repetitions, max use
       case 1:
+        ctx->R  = malloc(ctx->c_len);
+        if(!ctx->R) exit(-1);
+
+        scan((u8*)line, &ctx->c_len, STORE_IN, ctx->R); // store
+
+        scan(ctx->R, &ctx->c_len, DUMP, NULL);          // report
+
+        idx++;
         break;
 
       case 2:
@@ -116,6 +142,7 @@ void parse_file(char *filename, ctx *ctx)
 
   }
   free(line);
+  fclose(fp);
 }
 
 
@@ -128,12 +155,14 @@ int main(int argc, char **argv)
   {
     parse_file(argv[2], &job);
 
+    free(job.cset);
+    free(job.R);
     exit(0);
   }
 
 
-  if(argv[1]) {
-
+  if(argv[1])
+  {
     job.w_len = strlen(argv[1]);
     job.word  = malloc(job.w_len);
     strncpy((char*)job.word, argv[1], job.w_len);
@@ -146,17 +175,16 @@ int main(int argc, char **argv)
 
   printf("%s %u\n", job.word, job.w_len);
 
-  scan(job.word, &job.w_len, 0);
-  scan(job.word, &job.w_len, 1);
-  scan(job.word, &job.w_len, 2);
+  scan(job.word, &job.w_len, CHAR, NULL);
+  scan(job.word, &job.w_len, DUMP, NULL);
+  scan(job.word, &job.w_len, HEX, NULL);
 
   u8 n = job.w_len -1;
   u32 c = 0;
   while(1) {
-    change(job.word, &n);
+    change(&job, &n);
 
-//    scan(job.word, &job.w_len, 2);
-
+//    scan(job.word, &job.w_len, CHAR);
     printf("%s %d\r", job.word, job.w_len);
 
     if(memcmp(job.word, "acqua", job.w_len) == 0) break;
