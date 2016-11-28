@@ -56,13 +56,13 @@ void scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
   puts("");
 }
 
-void change(u8 *item, u8 *i)
+void change(ctx *ctx, u8 *i)
 {
   u8 *p = NULL;
 
   while(*i >= 0)
   {
-    p = item + *i;
+    p = ctx->word + *i;
 
     if(*p == 0x7a) {  //last    //ctx->c_len
       //printf("[%2x]", *p);
