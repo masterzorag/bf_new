@@ -18,12 +18,19 @@ enum mode
   CHAR,
   DUMP,
   HEX,
-  STORE_IN
+  STORE_IN,
+  FIND
 };
 
-void scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
+void pick(u8 *item, int idx)
 {
-  u8 *p = (u8*)item;
+  u8 *p = item + idx;
+  printf("%.2d  %c  0x%.2x R=%d\n", idx, *p, *p, item[idx]);
+}
+
+u8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
+{
+  u8 *p = (u8*)item, ret = -1;
 
   for(u8 i=0; i<*l; i++)
   {
@@ -48,12 +55,23 @@ void scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
           printf("%.2d/%.2d  %c  0x%.2x -> %.2d\n", i, *l, *p, atoi(t), *(dst + i));
           break; }
 
+       case 4: {  // and FIND dst
+          //printf("%.2d/%.2d  %c  0x%.2x\n", i, *l, *p, *dst);
+          if(*p == *dst) return i;
+          {
+            
+            
+          }
+          break; }
+
        default :
           break;
     }
     p++;
   }
   puts("");
+
+  return ret;
 }
 
 void change(ctx *ctx, u8 *i)
@@ -64,24 +82,25 @@ void change(ctx *ctx, u8 *i)
   {
     p = ctx->word + *i;
 
-    if(*p == 0x7a) {  //last    //ctx->c_len
+    if(*p == *(ctx->cset + ctx->c_len -1)) // last one
+    {
       //printf("[%2x]", *p);
 
-      *p = 0x61;   // first     //ctx->cset
-
-      // 0x21-0x7f A-z
-      // 0x61-0x3a a-9
-
+      *p = *ctx->cset;     // first one
       *i -= 1;
-      if(*i < 0) exit(-1);
 
-    } else {
-      *p += 1;
-      return;
+      if(*i < 0) exit(-1); // trap
     }
+    else
+    {
+      u8 r = scan(ctx->cset, &ctx->c_len, FIND, p); // find in charset
+//    if(r == ctx->c_len -1) getchar();
 
+      *p = *(ctx->cset + r +1);      // change to next one
+
+      break;
+    }
   }
-
   p = NULL;
 }
 
@@ -98,13 +117,12 @@ void parse_file(char *filename, ctx *ctx)
   u8 idx = 0;
   while ((read = getline(&line, &len, fp)) != -1)
   {
-    if(line[0] == '#') continue;  // skip commented (#) lines
+    if(line[0] == '#') continue; // skip commented (#) lines
 
     switch(idx)
     {
-      // setup charset
+      // Setup charset, first line
       case 0:
-
         ctx->c_len = strlen(line) /* trim newline unconditionally */ -1;
         ctx->cset  = malloc(ctx->c_len);
         if(!ctx->cset) exit(-1);
@@ -113,11 +131,10 @@ void parse_file(char *filename, ctx *ctx)
         ctx->cset[ctx->c_len] = '\0';
 
         scan(ctx->cset, &ctx->c_len, CHAR, NULL);    // report
-
         idx++;
         break;
 
-      // setup Repetitions, max use
+      // Setup Repetitions, second line
       case 1:
         ctx->R  = malloc(ctx->c_len);
         if(!ctx->R) exit(-1);
@@ -125,7 +142,6 @@ void parse_file(char *filename, ctx *ctx)
         scan((u8*)line, &ctx->c_len, STORE_IN, ctx->R); // store
 
         scan(ctx->R, &ctx->c_len, DUMP, NULL);          // report
-
         idx++;
         break;
 
@@ -154,12 +170,14 @@ int main(int argc, char **argv)
   if(argv[2])
   {
     parse_file(argv[2], &job);
-
-    free(job.cset);
-    free(job.R);
-    exit(0);
+  } else {
+    printf("pass a config file\n");
+    exit(EXIT_FAILURE);
   }
 
+
+  // report
+  //pick(job.R, 0);
 
   if(argv[1])
   {
@@ -170,7 +188,7 @@ int main(int argc, char **argv)
     if(!job.word) exit(-1);
 
   } else {
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
 
   printf("%s %u\n", job.word, job.w_len);
@@ -181,13 +199,15 @@ int main(int argc, char **argv)
 
   u8 n = job.w_len -1;
   u32 c = 0;
-  while(1) {
-    change(&job, &n);
+  while(1)
+  {
 
-//    scan(job.word, &job.w_len, CHAR);
+ //   scan(job.word, &job.w_len, CHAR, NULL);
     printf("%s %d\r", job.word, job.w_len);
 
     if(memcmp(job.word, "acqua", job.w_len) == 0) break;
+
+    change(&job, &n);
 
     n = job.w_len -1;
     c++;
@@ -196,6 +216,8 @@ int main(int argc, char **argv)
   printf("%d\n", c);
 
   free(job.word);
+  free(job.cset);
+  free(job.R);
 
   return 0;
 }
