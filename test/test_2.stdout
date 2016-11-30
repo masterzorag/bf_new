@@ -1,0 +1,604 @@
+reading max 5 lines
+malloc for 40 @0xd7a290
+set 00/04 @0xd7a290:5 items
+00/05  a  0x61 097
+01/05  b  0x62 098
+02/05  c  0x63 099
+03/05  d  0x64 100
+04/05  e  0x65 101
+
+set 01/04 @0xd7a2a0:8 items
+00/08  a  0x61 097
+01/08  b  0x62 098
+02/08  c  0x63 099
+03/08  d  0x64 100
+04/08  e  0x65 101
+05/08  f  0x66 102
+06/08  g  0x67 103
+07/08  h  0x68 104
+
+set 02/04 @0xd7a2b0:8 items
+00/08  s  0x73 115
+01/08  t  0x74 116
+02/08  q  0x71 113
+03/08  u  0x75 117
+04/08  v  0x76 118
+05/08  z  0x7a 122
+06/08  x  0x78 120
+07/08  a  0x61 097
+
+set 03/04 @0xd7a2c0:8 items
+00/08  q  0x71 113
+01/08  u  0x75 117
+02/08  w  0x77 119
+03/08  j  0x6a 106
+04/08  y  0x79 121
+05/08  a  0x61 097
+06/08  b  0x62 098
+07/08  c  0x63 099
+
+set 04/04 @0xd7a2d0:6 items
+00/06  s  0x73 115
+01/06  t  0x74 116
+02/06  u  0x75 117
+03/06  a  0x61 097
+04/06  b  0x62 098
+05/06  c  0x63 099
+
+report from main
+
+00/05  a  0x61 097
+01/05  b  0x62 098
+02/05  c  0x63 099
+03/05  d  0x64 100
+04/05  e  0x65 101
+
+00/08  a  0x61 097
+01/08  b  0x62 098
+02/08  c  0x63 099
+03/08  d  0x64 100
+04/08  e  0x65 101
+05/08  f  0x66 102
+06/08  g  0x67 103
+07/08  h  0x68 104
+
+00/08  s  0x73 115
+01/08  t  0x74 116
+02/08  q  0x71 113
+03/08  u  0x75 117
+04/08  v  0x76 118
+05/08  z  0x7a 122
+06/08  x  0x78 120
+07/08  a  0x61 097
+
+00/08  q  0x71 113
+01/08  u  0x75 117
+02/08  w  0x77 119
+03/08  j  0x6a 106
+04/08  y  0x79 121
+05/08  a  0x61 097
+06/08  b  0x62 098
+07/08  c  0x63 099
+
+00/06  s  0x73 115
+01/06  t  0x74 116
+02/06  u  0x75 117
+03/06  a  0x61 097
+04/06  b  0x62 098
+05/06  c  0x63 099
+
+aaaaa 5
+aaaaa
+00/05  a  0x61 097
+01/05  a  0x61 097
+02/05  a  0x61 097
+03/05  a  0x61 097
+04/05  a  0x61 097
+
+61 61 61 61 61 
+aaaaa 5
+aaaab 5
+aaaac 5
+aaabs 5
+aaabt 5
+aaabu 5
+aaaba 5
+aaabb 5
+aaabc 5
+aaacs 5
+aaact 5
+aaacu 5
+aaaca 5
+aaacb 5
+aaacc 5
+absqs 5
+absqt 5
+absqu 5
+absqa 5
+absqb 5
+absqc 5
+absus 5
+absut 5
+absuu 5
+absua 5
+absub 5
+absuc 5
+absws 5
+abswt 5
+abswu 5
+abswa 5
+abswb 5
+abswc 5
+absjs 5
+absjt 5
+absju 5
+absja 5
+absjb 5
+absjc 5
+absys 5
+absyt 5
+absyu 5
+absya 5
+absyb 5
+absyc 5
+absas 5
+absat 5
+absau 5
+absaa 5
+absab 5
+absac 5
+absbs 5
+absbt 5
+absbu 5
+absba 5
+absbb 5
+absbc 5
+abscs 5
+absct 5
+abscu 5
+absca 5
+abscb 5
+abscc 5
+abtqs 5
+abtqt 5
+abtqu 5
+abtqa 5
+abtqb 5
+abtqc 5
+abtus 5
+abtut 5
+abtuu 5
+abtua 5
+abtub 5
+abtuc 5
+abtws 5
+abtwt 5
+abtwu 5
+abtwa 5
+abtwb 5
+abtwc 5
+abtjs 5
+abtjt 5
+abtju 5
+abtja 5
+abtjb 5
+abtjc 5
+abtys 5
+abtyt 5
+abtyu 5
+abtya 5
+abtyb 5
+abtyc 5
+abtas 5
+abtat 5
+abtau 5
+abtaa 5
+abtab 5
+abtac 5
+abtbs 5
+abtbt 5
+abtbu 5
+abtba 5
+abtbb 5
+abtbc 5
+abtcs 5
+abtct 5
+abtcu 5
+abtca 5
+abtcb 5
+abtcc 5
+abqqs 5
+abqqt 5
+abqqu 5
+abqqa 5
+abqqb 5
+abqqc 5
+abqus 5
+abqut 5
+abquu 5
+abqua 5
+abqub 5
+abquc 5
+abqws 5
+abqwt 5
+abqwu 5
+abqwa 5
+abqwb 5
+abqwc 5
+abqjs 5
+abqjt 5
+abqju 5
+abqja 5
+abqjb 5
+abqjc 5
+abqys 5
+abqyt 5
+abqyu 5
+abqya 5
+abqyb 5
+abqyc 5
+abqas 5
+abqat 5
+abqau 5
+abqaa 5
+abqab 5
+abqac 5
+abqbs 5
+abqbt 5
+abqbu 5
+abqba 5
+abqbb 5
+abqbc 5
+abqcs 5
+abqct 5
+abqcu 5
+abqca 5
+abqcb 5
+abqcc 5
+abuqs 5
+abuqt 5
+abuqu 5
+abuqa 5
+abuqb 5
+abuqc 5
+abuus 5
+abuut 5
+abuuu 5
+abuua 5
+abuub 5
+abuuc 5
+abuws 5
+abuwt 5
+abuwu 5
+abuwa 5
+abuwb 5
+abuwc 5
+abujs 5
+abujt 5
+abuju 5
+abuja 5
+abujb 5
+abujc 5
+abuys 5
+abuyt 5
+abuyu 5
+abuya 5
+abuyb 5
+abuyc 5
+abuas 5
+abuat 5
+abuau 5
+abuaa 5
+abuab 5
+abuac 5
+abubs 5
+abubt 5
+abubu 5
+abuba 5
+abubb 5
+abubc 5
+abucs 5
+abuct 5
+abucu 5
+abuca 5
+abucb 5
+abucc 5
+abvqs 5
+abvqt 5
+abvqu 5
+abvqa 5
+abvqb 5
+abvqc 5
+abvus 5
+abvut 5
+abvuu 5
+abvua 5
+abvub 5
+abvuc 5
+abvws 5
+abvwt 5
+abvwu 5
+abvwa 5
+abvwb 5
+abvwc 5
+abvjs 5
+abvjt 5
+abvju 5
+abvja 5
+abvjb 5
+abvjc 5
+abvys 5
+abvyt 5
+abvyu 5
+abvya 5
+abvyb 5
+abvyc 5
+abvas 5
+abvat 5
+abvau 5
+abvaa 5
+abvab 5
+abvac 5
+abvbs 5
+abvbt 5
+abvbu 5
+abvba 5
+abvbb 5
+abvbc 5
+abvcs 5
+abvct 5
+abvcu 5
+abvca 5
+abvcb 5
+abvcc 5
+abzqs 5
+abzqt 5
+abzqu 5
+abzqa 5
+abzqb 5
+abzqc 5
+abzus 5
+abzut 5
+abzuu 5
+abzua 5
+abzub 5
+abzuc 5
+abzws 5
+abzwt 5
+abzwu 5
+abzwa 5
+abzwb 5
+abzwc 5
+abzjs 5
+abzjt 5
+abzju 5
+abzja 5
+abzjb 5
+abzjc 5
+abzys 5
+abzyt 5
+abzyu 5
+abzya 5
+abzyb 5
+abzyc 5
+abzas 5
+abzat 5
+abzau 5
+abzaa 5
+abzab 5
+abzac 5
+abzbs 5
+abzbt 5
+abzbu 5
+abzba 5
+abzbb 5
+abzbc 5
+abzcs 5
+abzct 5
+abzcu 5
+abzca 5
+abzcb 5
+abzcc 5
+abxqs 5
+abxqt 5
+abxqu 5
+abxqa 5
+abxqb 5
+abxqc 5
+abxus 5
+abxut 5
+abxuu 5
+abxua 5
+abxub 5
+abxuc 5
+abxws 5
+abxwt 5
+abxwu 5
+abxwa 5
+abxwb 5
+abxwc 5
+abxjs 5
+abxjt 5
+abxju 5
+abxja 5
+abxjb 5
+abxjc 5
+abxys 5
+abxyt 5
+abxyu 5
+abxya 5
+abxyb 5
+abxyc 5
+abxas 5
+abxat 5
+abxau 5
+abxaa 5
+abxab 5
+abxac 5
+abxbs 5
+abxbt 5
+abxbu 5
+abxba 5
+abxbb 5
+abxbc 5
+abxcs 5
+abxct 5
+abxcu 5
+abxca 5
+abxcb 5
+abxcc 5
+abaqs 5
+abaqt 5
+abaqu 5
+abaqa 5
+abaqb 5
+abaqc 5
+abaus 5
+abaut 5
+abauu 5
+abaua 5
+abaub 5
+abauc 5
+abaws 5
+abawt 5
+abawu 5
+abawa 5
+abawb 5
+abawc 5
+abajs 5
+abajt 5
+abaju 5
+abaja 5
+abajb 5
+abajc 5
+abays 5
+abayt 5
+abayu 5
+abaya 5
+abayb 5
+abayc 5
+abaas 5
+abaat 5
+abaau 5
+abaaa 5
+abaab 5
+abaac 5
+ababs 5
+ababt 5
+ababu 5
+ababa 5
+ababb 5
+ababc 5
+abacs 5
+abact 5
+abacu 5
+abaca 5
+abacb 5
+abacc 5
+acsqs 5
+acsqt 5
+acsqu 5
+acsqa 5
+acsqb 5
+acsqc 5
+acsus 5
+acsut 5
+acsuu 5
+acsua 5
+acsub 5
+acsuc 5
+acsws 5
+acswt 5
+acswu 5
+acswa 5
+acswb 5
+acswc 5
+acsjs 5
+acsjt 5
+acsju 5
+acsja 5
+acsjb 5
+acsjc 5
+acsys 5
+acsyt 5
+acsyu 5
+acsya 5
+acsyb 5
+acsyc 5
+acsas 5
+acsat 5
+acsau 5
+acsaa 5
+acsab 5
+acsac 5
+acsbs 5
+acsbt 5
+acsbu 5
+acsba 5
+acsbb 5
+acsbc 5
+acscs 5
+acsct 5
+acscu 5
+acsca 5
+acscb 5
+acscc 5
+actqs 5
+actqt 5
+actqu 5
+actqa 5
+actqb 5
+actqc 5
+actus 5
+actut 5
+actuu 5
+actua 5
+actub 5
+actuc 5
+actws 5
+actwt 5
+actwu 5
+actwa 5
+actwb 5
+actwc 5
+actjs 5
+actjt 5
+actju 5
+actja 5
+actjb 5
+actjc 5
+actys 5
+actyt 5
+actyu 5
+actya 5
+actyb 5
+actyc 5
+actas 5
+actat 5
+actau 5
+actaa 5
+actab 5
+actac 5
+actbs 5
+actbt 5
+actbu 5
+actba 5
+actbb 5
+actbc 5
+actcs 5
+actct 5
+actcu 5
+actca 5
+actcb 5
+actcc 5
+acqqs 5
+acqqt 5
+acqqu 5
+acqqa 5
+acqqb 5
+acqqc 5
+acqus 5
+acqut 5
+acquu 5
+acqua 5
+504

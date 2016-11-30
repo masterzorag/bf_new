@@ -92,7 +92,7 @@ void change(ctx *ctx, u8 *i)
   {
     p = ctx->word.data + *i;
 
-    if(*p == *(ctx->cset->data + ctx->cset->len -1)) // last one
+    if(*p == *(ctx->cset[*i].data + ctx->cset[*i].len -1)) // last one
     {
       //printf("[%2x]", *p);
 
@@ -106,9 +106,11 @@ void change(ctx *ctx, u8 *i)
       set *d = &ctx->cset[*i];
 
       u8 r = scan(d->data, &d->len, FIND, p); // find in charset
-//    if(r == ctx->c_len -1) getchar();
+      //printf("r=%d", r);
 
-      *p = *(d->data + r +1);      // change to next one
+      if(r == -1) r = d->len;
+
+      *p = *(d->data + r + 1);      // change to next one
 
       break;
     }
@@ -171,7 +173,8 @@ int main(int argc, char **argv)
     p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427");
     if(!p) exit(EXIT_FAILURE);
     u8 p_len = 20;
-    scan(p, &p_len, HEX, NULL);          // report
+  //scan(p, &p_len, HEX, NULL);          // report
+    free(p);
   }
 
   if(argv[1])
@@ -201,9 +204,10 @@ int main(int argc, char **argv)
     scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL);          // report
   }
 
+/*
   cleanup(&job);
   exit(0);
-
+*/
 
   printf("%s %u\n", job.word.data, job.word.len);
 
@@ -217,7 +221,7 @@ int main(int argc, char **argv)
   {
 
  //   scan(job.word, &job.word.len, CHAR, NULL);
-    printf("%s %d\r", job.word.data, job.word.len);
+    printf("%s %d\n", job.word.data, job.word.len);
 
     if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
 
