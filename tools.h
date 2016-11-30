@@ -1,5 +1,5 @@
-#ifndef TYPES_H__
-#define TYPES_H__
+#ifndef TOOLS_H__
+#define TOOLS_H__
 
 //#include <stdint.h>
 

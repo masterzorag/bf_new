@@ -1,5 +1,5 @@
 CC= gcc
-CFLAGS= -std=gnu99 -Wall
+CFLAGS= -std=gnu99 -Wall -ggdb
 
 all: bf
 
