@@ -1,0 +1,10 @@
+# each line is an indexed charset
+abcde
+abcdefgh
+stquvzx
+quwjyabc
+stuabc
+
+# we'll need to sort each one
+# we'll need to expand parser to scan for error
+# deal with multibyte sequence
