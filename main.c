@@ -30,6 +30,16 @@ void pick(u8 *item, int idx)
   printf("%.2d  %c  0x%.2x R=%d\n", idx, *p, *p, item[idx]);
 }
 
+void cleanup(ctx *item)
+{
+  for(u8 i = 0; i < item->word.len; i++)
+  {
+    free(item->cset[i].data);
+  }
+  free(item->cset);
+  free(item->word.data);
+}
+
 u8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
 {
   u8 *p = (u8*)item, ret = -1;
@@ -185,6 +195,8 @@ int main(int argc, char **argv)
   {
     scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL);          // report
   }
+
+  cleanup(&job);
   exit(0);
 
 
@@ -211,10 +223,6 @@ int main(int argc, char **argv)
   }
 
   printf("%d\n", c);
-
-  free(job.word.data);
-  free(job.cset);
-  free(job.R);
-
+  cleanup(&job);
   return 0;
 }
