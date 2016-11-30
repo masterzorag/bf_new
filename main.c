@@ -40,9 +40,10 @@ void cleanup(ctx *item)
   free(item->word.data);
 }
 
-u8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
+s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
 {
-  u8 *p = (u8*)item, ret = -1;
+  u8 *p = (u8*)item;
+  s8 ret = -1;
 
   for(u8 i = 0; i < *l; i++)
   {
@@ -105,10 +106,13 @@ void change(ctx *ctx, u8 *i)
     {
       set *d = &ctx->cset[*i];
 
-      u8 r = scan(d->data, &d->len, FIND, p); // find in charset
+      s8 r = scan(d->data, &d->len, FIND, p); // find in charset
       //printf("r=%d", r);
 
-      if(r == -1) r = d->len;
+      if(r == -1) // not found !
+      {
+        r = d->len; puts("exception"); getchar(); // trap exceptions
+      }
 
       *p = *(d->data + r + 1);      // change to next one
 
