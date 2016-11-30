@@ -20,7 +20,7 @@ enum mode
   CHAR,
   DUMP,
   HEX,
-  STORE_IN,
+//STORE_AS_CHAR,
   FIND
 };
 
@@ -61,13 +61,13 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
           printf("%.2x ", *p);
           break;
 
-       case STORE_IN: {
+/*       case STORE_AS_CHAR: {
           char t[2];
           strncpy(t, (char*)p, 1), t[1] = '\0';
           *(dst + i) = atoi(t);
           printf("%.2d/%.2d  %c  0x%.2x -> %.2d\n", i, *l, *p, atoi(t), *(dst + i));
           break; }
-
+*/
        case FIND:
           if(*p == *dst)
           {
