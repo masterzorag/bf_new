@@ -69,10 +69,11 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
           break; }
 
        case FIND:
-          //printf("%.2d/%.2d  %c  0x%.2x\n", i, *l, *p, *dst);
-          if(*p == *dst) return i;
-
-          if(ret == -1) getchar();  // no found !!!
+          if(*p == *dst)
+          {
+          //printf("%.2d/%.2d  %c  %c ret:%d\n", i, *l, *p, *dst, i);
+            return i;
+          }
           break;
 
        default :
@@ -172,12 +173,13 @@ int main(int argc, char **argv)
 {
   ctx job;  // working context
 
+  if(0)
   {
     u8 *p = NULL;
-    p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427");
+    p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427"); // store
     if(!p) exit(EXIT_FAILURE);
     u8 p_len = 20;
-  //scan(p, &p_len, HEX, NULL);          // report
+    scan(p, &p_len, HEX, NULL);          // report
     free(p);
   }
 
