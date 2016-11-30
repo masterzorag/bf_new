@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
+#include "tools.h"
 
 typedef struct {
   u8 *data;
@@ -156,18 +156,23 @@ u8 parse_file(char *filename, ctx *ctx)
   }
 
   dst = NULL;
-  //if(line) free(line);
   fclose(fp);
 
- //exit(1);
   return idx;
 }
-
 
 
 int main(int argc, char **argv)
 {
   ctx job;  // working context
+
+  {
+    u8 *p = NULL;
+    p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427");
+    if(!p) exit(EXIT_FAILURE);
+    u8 p_len = 20;
+    scan(p, &p_len, HEX, NULL);          // report
+  }
 
   if(argv[1])
   {
