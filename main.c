@@ -24,11 +24,6 @@ enum mode
   FIND
 };
 
-void pick(u8 *item, int idx)
-{
-  u8 *p = item + idx;
-  printf("%.2d  %c  0x%.2x R=%d\n", idx, *p, *p, item[idx]);
-}
 
 void cleanup(ctx *item)
 {
@@ -88,27 +83,23 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
 
 void change(ctx *ctx, u8 *i)
 {
-  u8 *p = NULL;
+  u8  *p = NULL;
+  set *d = NULL;
 
   while(*i >= 0)
   {
     p = ctx->word.data + *i;
+    d = ctx->cset + *i;
 
-    if(*p == *(ctx->cset[*i].data + ctx->cset[*i].len -1)) // last one
-    {
-      //printf("[%2x]", *p);
-
-      *p = *ctx->cset[*i].data;     // first one
+    if(*p == *(d->data + d->len -1)) // last one
+    {//printf("[%2x]", *p);
+      *p = *d->data;     // first one
       *i -= 1;
-
-      if(*i < 0) exit(-1); // trap exceptions
     }
     else
-    {
-      set *d = &ctx->cset[*i];
+    {//d = ctx->cset + *i;
 
       s8 r = scan(d->data, &d->len, FIND, p); // find in charset
-      //printf("r=%d", r);
 
       if(r == -1) // not found !
       {
@@ -116,7 +107,6 @@ void change(ctx *ctx, u8 *i)
       }
 
       *p = *(d->data + r + 1);      // change to next one
-
       break;
     }
   }
@@ -151,7 +141,7 @@ u8 parse_file(char *filename, ctx *ctx)
 //    printf("Retrieved line of length %zu\n", read);
 //    printf("%s %zu\n", line, strlen(line));
 
-    dst = &ctx->cset[idx];
+    dst = ctx->cset + idx;
 
     dst->len = read -1;
     dst->data = (u8*)strndup(line, dst->len);
