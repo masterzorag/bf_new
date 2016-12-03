@@ -21,7 +21,8 @@ enum mode
   DUMP,
   HEX,
 //STORE_AS_CHAR,
-  FIND
+  FIND,
+  MARK
 };
 
 
@@ -70,6 +71,12 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
             return i;
           }
           break;
+
+       case MARK: {
+          if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Mark dst
+          printf("%c", *p);
+          if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+          break; }
 
        default :
           break;
@@ -215,14 +222,16 @@ int main(int argc, char **argv)
   u32 c = 0;
   while(1)
   {
-
- //   scan(job.word, &job.word.len, CHAR, NULL);
-    printf("%s %d\n", job.word.data, job.word.len);
-
     if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
 
     change(&job, &n);
 
+    // main output
+//  scan(job.word.data, &job.word.len, CHAR, NULL);
+    scan(job.word.data, &job.word.len, MARK, &job.word.data[n]);
+//  printf("%s %d\n", job.word.data, job.word.len);
+
+    // reset n to rightmost one
     n = job.word.len -1;
     c++;
   }
