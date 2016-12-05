@@ -57,16 +57,13 @@ int main(int argc, char **argv)
   job.word.data = malloc(256);       //strncpy((char*)job.word.data, argv[1], job.word.len);
   if(!job.word.data) exit(EXIT_FAILURE);
 
-
-  if(0) // example
+  s8 ret = parse_opt(argc, argv, &job); // printf("%d\n", ret);
+  if(ret)
   {
-    u8 *p = NULL;
-    p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427"); // store
-    if(!p) exit(EXIT_FAILURE);
-    u8 p_len = 20;
-    scan(p, &p_len, HEX, NULL); // report
-    free(p);
+    cleanup(&job);
+    exit(EXIT_FAILURE);
   }
+  getchar();
 
   ret = parse_file(&job);
   if(ret < 0) // parse file

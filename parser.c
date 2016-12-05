@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "parser.h"
 
 u64 _x_to_u64(const s8 *hex)
@@ -31,12 +32,51 @@ u8 *_x_to_u8_buffer(const s8 *hex)
   u8 *res = (u8 *)malloc(sizeof(u8) * len);
   u8 *ptr = res;
 
-        while(len--){
-                xtmp[0] = *hex++;
-                xtmp[1] = *hex++;
-                *ptr++ = (u8) _x_to_u64(xtmp);
-        }
-        return res;
+  while(len--){
+    xtmp[0] = *hex++;
+    xtmp[1] = *hex++;
+    *ptr++  = (u8) _x_to_u64(xtmp);
+  }
+  return res;
+}
+
+
+s8 parse_opt(int argc, char **argv, ctx *ctx)
+{
+  int idx, c;
+  opterr = 0;
+
+  while((c = getopt(argc, argv, "xc:l:")) != -1)
+    switch(c)
+    {
+      case 'l':
+        ctx->word.len = atoi(optarg); break;
+
+      case 'x':
+        ctx->mode = HEX; break;
+
+      case 'c':
+        ctx->word.data = (u8*)strdup(optarg); break;
+
+      case '?':
+        if(optopt == 'c' || optopt == 'l')
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        else if(isprint(optopt))
+          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+        else
+          fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+        return -1;
+
+      default:
+        abort();
+    }
+
+  printf ("lvalue = %d, xflag = %d, cvalue = %s\n", ctx->word.len, ctx->mode, ctx->word.data);
+
+  for(idx = optind; idx < argc; idx++)
+    printf ("Non-option argument %s\n", argv[idx]);
+
+  return 0;
 }
 
 
