@@ -32,4 +32,4 @@ enum mode
 u64 _x_to_u64(const s8 *hex);
 u8 *_x_to_u8_buffer(const s8 *hex);
 s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst);
-s8 parse_file(char *filename, ctx *ctx);
+s8 parse_file(ctx *ctx);

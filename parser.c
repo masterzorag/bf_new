@@ -3,29 +3,32 @@
 #include <string.h>
 #include "parser.h"
 
-u64 _x_to_u64(const s8 *hex){
-        u64 t = 0, res = 0;
-        u32 len = strlen(hex);
-        char c;
+u64 _x_to_u64(const s8 *hex)
+{
+  u64 t = 0, res = 0;
+  u32 len = strlen(hex);
+  char c;
 
-        while(len--){
-                c = *hex++;
-                if(c >= '0' && c <= '9')        t = c - '0';
-                else if(c >= 'a' && c <= 'f')   t = c - 'a' + 10;
-                else if(c >= 'A' && c <= 'F')   t = c - 'A' + 10;
-                else                            t = 0;
-                res |= t << (len * 4);
-        }
-        return res;
+  while(len--){
+    c = *hex++;
+    if(c >= '0' && c <= '9')      t = c - '0';
+    else if(c >= 'a' && c <= 'f') t = c - 'a' + 10;
+    else if(c >= 'A' && c <= 'F') t = c - 'A' + 10;
+    else                          t = 0;
+    res |= t << (len * 4);
+  }
+  return res;
 }
 
-u8 *_x_to_u8_buffer(const s8 *hex){
-        u32 len = strlen(hex);
-        if(len % 2 != 0) return NULL;   // (add sanity check in caller)
 
-        s8 xtmp[3] = {0, 0, 0};
-        u8 *res = (u8 *)malloc(sizeof(u8) * len);
-        u8 *ptr = res;
+u8 *_x_to_u8_buffer(const s8 *hex)
+{
+  u32 len = strlen(hex); // printf("%s %u\n", hex, len);
+//  if(len % 2 != 0) return NULL; // (add sanity check in caller)
+
+  s8 xtmp[3] = {0, 0, 0};
+  u8 *res = (u8 *)malloc(sizeof(u8) * len);
+  u8 *ptr = res;
 
         while(len--){
                 xtmp[0] = *hex++;
@@ -54,7 +57,10 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         break;
 
       case DUMP:
-        printf("%.2d/%.2d  %c\t0x%.2x %.3d\n", i, *l, *p, *p, *p);
+        printf("%.2d/%.2d  ", i, *l);
+        if(isprint(*p)) printf("%c\t", *p);
+        else            printf(".\t");
+        printf("0x%.2x %.3d\n", *p, *p);
         break;
 
       case FIND:
@@ -62,10 +68,7 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         break;
 
       case COUNT:
-        if(*p == *dst)
-        { //printf("%.2d/%.2d  %c  %c ret:%d\n", i, *l, *p, *dst, i);
-          ret++;
-        }
+        if(*p == *dst) ret++;
         break;
 
       case MARK: {
@@ -85,46 +88,49 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
     }
     p++;
   }
-  puts("");
+  printf("\n");
 
   return ret;
 }
 
 
-s8 parse_file(char *filename, ctx *ctx)
+s8 parse_file(ctx *ctx)
 {
   FILE *fp;
   char *line = NULL;
   size_t len = 0;
   ssize_t read;
 
-  fp = fopen(filename, "r");
+  fp = fopen((char *)ctx->word.data, "r");
+  printf("%s\n", ctx->word.data);
   if(!fp) return -1;
 
-  u8 max = ctx->word.len - 1;
+  u8 max = ctx->word.len;
   printf("reading max %d lines\n", max);
 
   ctx->cset = malloc(sizeof(set) * max);
-  if(!ctx->cset) exit(EXIT_FAILURE);
+  if(!ctx->cset) return -1;
   printf("malloc for %zu @%p\n", sizeof(set) * max, ctx->cset);
 
   u8 idx = 0;
   set *dst = NULL;
 
-  while ((read = getline(&line, &len, fp)) != -1
-  && (idx < max))
+  while((read = getline(&line, &len, fp)) != -1
+  && (idx < max)
+  )
   {
     if(line[0] == '#') continue; // skip commented (#) lines
 
 //  printf("Retrieved line of length %zu\n", read);
-//  printf("%s %zu\n", line, strlen(line));
+//  printf("%d %s %zu\n", idx, line, strlen(line));
+
+    line[read] = '\n'; // trim newline unconditionally
 
     dst = ctx->cset + idx;
-
-    line[read] = '\n';
     dst->len = read -1;
+    dst->data = NULL;
 
-    switch(ctx->mode)  // store
+    switch(ctx->mode) // check and store
     {
       case CHAR:
         dst->data = (u8*)strndup(line, dst->len);
@@ -133,11 +139,11 @@ s8 parse_file(char *filename, ctx *ctx)
       case HEX:
         dst->len /= 2;
         dst->data = _x_to_u8_buffer(line);
-        break;
+        break; }
     }
     if(!dst->data) return(-1);
 
-    printf("set %2d/%.2d @%p:%d items\n", idx, max -1, dst, dst->len);
+    printf("set %2d/%.2d @%p:%d items\n", idx, max, dst, dst->len);
     scan(dst->data, &dst->len, DUMP, NULL);          // report
 
     idx++;
@@ -149,7 +155,8 @@ s8 parse_file(char *filename, ctx *ctx)
   - check for uniqueness
   */
   ctx->word.len = idx;
-  *(ctx->word.data + idx) = '\n';
+  if(!realloc(ctx->word.data, sizeof(u8) * idx)) return -1;
+  *(ctx->word.data + idx) = '\0';
 
   dst = &ctx->word;
   set *d = NULL;
@@ -169,8 +176,8 @@ s8 parse_file(char *filename, ctx *ctx)
 //    printf(" %.2d/%.2d %.2x:%d items\n", j, d->len, *p, count);
       if(count > 1)
       {
+        printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
         scan(d->data, &d->len, MARK_ALL, p);
-        printf("[!] Charset %u must be unique, found %u repetitions!\n", i, count);
         return -1;
       }
     }

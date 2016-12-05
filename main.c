@@ -30,12 +30,7 @@ void change(ctx *ctx, s8 *i)
     if(*p == *(d->data + d->len -1)) // last one
     {//printf("[%2x] ", *p);
       *p = *d->data;     // first one
-
-      if(*i != 0)
-        *i -= 1;
-      else
-        *i = -1;  // exit(COMPLETED)
-
+      *i -= 1;
     }
     else
     {//d = ctx->cset + *i;
@@ -56,18 +51,10 @@ void change(ctx *ctx, s8 *i)
 
 int main(int argc, char **argv)
 {
-  if(!argv[1] || !argv[2])
-  {
-    printf("pass a lenght and a config file\n");
-    exit(EXIT_FAILURE);
-  }
-
-  ctx job;                          // working context
+  ctx job;                     // working context
   job.cset = NULL;
-  job.mode = (argv[3]) ? HEX: CHAR; // setup mode
-  job.word.len = atoi(argv[1]) + 1;
-  job.word.data = malloc(job.word.len);
-  //strncpy((char*)job.word.data, argv[1], job.word.len);
+  job.mode = CHAR;
+  job.word.data = malloc(256);       //strncpy((char*)job.word.data, argv[1], job.word.len);
   if(!job.word.data) exit(EXIT_FAILURE);
 
 
@@ -81,10 +68,10 @@ int main(int argc, char **argv)
     free(p);
   }
 
-
-  if(parse_file(argv[2], &job) < 0) // parse file
+  ret = parse_file(&job);
+  if(ret < 0) // parse file
   {
-    printf("pass a valid config file, for appropriate mode\n");
+    printf("[E] Please recheck and pass a valid config file with -c\n");
     cleanup(&job);
     exit(EXIT_FAILURE);
   }
@@ -94,43 +81,39 @@ int main(int argc, char **argv)
   {
     scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL); // report
   }
+  scan(job.word.data, &job.word.len, job.mode, NULL);
   getchar();
 
   if(0) // example
   {
     printf("%s %u\n", job.word.data, job.word.len);
-
     scan(job.word.data, &job.word.len, CHAR, NULL);
     scan(job.word.data, &job.word.len, DUMP, NULL);
     scan(job.word.data, &job.word.len, HEX,  NULL);
   }
 
   s8 n = job.word.len -1;
-  u32 c = 0;
+  u32 c = 1;
   while(1)
   {
     if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
 
     change(&job, &n);
 
-    if(n < 0) break;  // exit(COMPLETED)
+    if(n < 0) break; // exit(COMPLETED)
 
-    // main output
-    if(job.mode)
-      scan(job.word.data, &job.word.len, HEX, NULL);
-    else
+    if(1) // main output
     {
 //    scan(job.word.data, &job.word.len, CHAR, NULL);
       scan(job.word.data, &job.word.len, MARK, &job.word.data[(u8)n]);
 //      printf("%s %d\n", job.word.data, job.word.len);
     }
 
-    // reset n to rightmost one
-    n = job.word.len -1;
+    n = job.word.len -1; // reset n to rightmost one
     c++;
   }
 
-  printf("%d\n", c);
+  printf("\n[%d]\n", c);
   cleanup(&job);
   return 0;
 }
