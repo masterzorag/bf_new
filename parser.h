@@ -5,6 +5,8 @@
   bf_new definitions
 */
 
+#define MAX_ELEM (256 /8)
+
 #ifdef DEBUG
   #define DPRINTF printf
 #else
@@ -22,7 +24,7 @@ typedef struct {
 } set;
 
 typedef struct {
-  set word;   // word
+  set word;   // working word
   set *cset;  // many charset
   u8 mode;    // requested mode
 } ctx;
@@ -35,7 +37,8 @@ enum mode
   DUMP,
   FIND,
   COUNT,
-  MARK,
+  MARK_CHAR,
+  MARK_HEX,
   MARK_ALL
 };
 

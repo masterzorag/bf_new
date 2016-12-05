@@ -71,10 +71,10 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  printf ("lvalue = %d, xflag = %d, cvalue = %s\n", ctx->word.len, ctx->mode, ctx->word.data);
+  DPRINTF("lvalue = %d, xflag = %d, cvalue = %s\n", ctx->word.len, ctx->mode, ctx->word.data);
 
   for(idx = optind; idx < argc; idx++)
-    printf ("Non-option argument %s\n", argv[idx]);
+    printf("Non-option argument %s\n", argv[idx]);
 
   return 0;
 }
@@ -117,16 +117,22 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         if(*p == *dst) ret++;
         break;
 
-      case MARK: {
-        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Mark dst
+      case MARK_CHAR: {
+        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
         printf("%c", *p);
         if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
         break; }
 
       case MARK_ALL: {
-        if(*p == *dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Mark dst
+        if(*p == *dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
         printf("%c", *p);
         if(*p == *dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+        break; }
+
+      case MARK_HEX: {
+        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
+        printf("%.2x", *p);
+        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
         break; }
 
       default :
@@ -134,7 +140,6 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
     }
     p++;
   }
-  printf("\n");
 
   return ret;
 }
@@ -148,15 +153,20 @@ s8 parse_file(ctx *ctx)
   ssize_t read;
 
   fp = fopen((char *)ctx->word.data, "r");
-  printf("%s\n", ctx->word.data);
+  DPRINTF("%s\n", ctx->word.data);
   if(!fp) return -1;
 
-  u8 max = ctx->word.len;
-  printf("reading max %d lines\n", max);
+
+  u8 max = MAX_ELEM;
+  if(ctx->word.len)
+  {
+    max = ctx->word.len;
+    printf("reading max %d lines\n", max);
+  }
 
   ctx->cset = malloc(sizeof(set) * max);
   if(!ctx->cset) return -1;
-  printf("malloc for %zu @%p\n", sizeof(set) * max, ctx->cset);
+  //printf("malloc for %zu @%p\n", sizeof(set) * max, ctx->cset);
 
   u8 idx = 0;
   set *dst = NULL;
@@ -167,13 +177,13 @@ s8 parse_file(ctx *ctx)
   {
     if(line[0] == '#') continue; // skip commented (#) lines
 
-//  printf("Retrieved line of length %zu\n", read);
-//  printf("%d %s %zu\n", idx, line, strlen(line));
+    DPRINTF("%2d Retrieved line of length %zu: ", idx, read);
+    line[read -1] = '\n'; // trim newline unconditionally
+    DPRINTF("%s", line);
 
-    line[read] = '\n'; // trim newline unconditionally
 
     dst = ctx->cset + idx;
-    dst->len = read -1;
+    dst->len = strlen(line) -1;
     dst->data = NULL;
 
     switch(ctx->mode) // check and store
@@ -183,10 +193,10 @@ s8 parse_file(ctx *ctx)
         break;
 
       case HEX: {
-        if(dst->len %2)
+        if(dst->len %2 || dst->len < 2)
         {
-          printf("[!] Line %u: lenght must be even!\n", idx +1);
-          scan((u8 *)line, &dst->len, CHAR, NULL);
+          printf("[!] Line %u: lenght must be even! (is:%u)\n", idx +1, dst->len);
+          scan((u8 *)line, &dst->len, CHAR, NULL); puts("");
           break;
         }
 
@@ -194,7 +204,7 @@ s8 parse_file(ctx *ctx)
         if(r != -1)
         {
           printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
-          scan((u8 *)line, &dst->len, MARK, (u8 *)&line[(u8)r]);
+          scan((u8 *)line, &dst->len, MARK_CHAR, (u8 *)&line[(u8)r]); puts("");
           break;
         }
 
@@ -204,8 +214,8 @@ s8 parse_file(ctx *ctx)
     }
     if(!dst->data) return(-1);
 
-    printf("set %2d/%.2d @%p:%d items\n", idx, max, dst, dst->len);
-    scan(dst->data, &dst->len, DUMP, NULL);          // report
+    //DPRINTF("set %2d/%.2d @%p: %d items\n", idx, max, dst, dst->len);
+    //scan(dst->data, &dst->len, DUMP, NULL);          // report
 
     idx++;
   }
@@ -216,7 +226,7 @@ s8 parse_file(ctx *ctx)
   - check for uniqueness
   */
   ctx->word.len = idx;
-  if(!realloc(ctx->word.data, sizeof(u8) * idx)) return -1;
+  if(!realloc(ctx->word.data, sizeof(u8) * (idx +1))) return -1;
   *(ctx->word.data + idx) = '\0';
 
   dst = &ctx->word;
@@ -227,7 +237,7 @@ s8 parse_file(ctx *ctx)
     *(dst->data + i) = *d->data; // fill the initial word
 
     // check if stored charset is unique
-    printf("set %2d/%.2d @%p:%d items\n", i, idx, d, d->len);
+    //DPRINTF("set %2d/%.2d @%p:%d items\n", i, idx, d, d->len);
     u8 *p = NULL;
     s8 count = 0;
     for(u8 j = 0; j < d->len; j++)  // scan each charset
@@ -238,7 +248,7 @@ s8 parse_file(ctx *ctx)
       if(count > 1)
       {
         printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
-        scan(d->data, &d->len, MARK_ALL, p);
+        scan(d->data, &d->len, MARK_ALL, p); puts("");
         return -1;
       }
     }
