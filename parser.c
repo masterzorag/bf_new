@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,7 +54,12 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         break;
 
       case HEX:
-        printf("%.2x ", *p);
+        printf("%.2x", *p);
+        break;
+
+      case IS_HEX:
+      //printf("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
+        if(!isxdigit(*p)) return i;
         break;
 
       case DUMP:
@@ -136,7 +142,22 @@ s8 parse_file(ctx *ctx)
         dst->data = (u8*)strndup(line, dst->len);
         break;
 
-      case HEX:
+      case HEX: {
+        if(dst->len %2)
+        {
+          printf("[!] Line %u: lenght must be even!\n", idx +1);
+          scan((u8 *)line, &dst->len, CHAR, NULL);
+          break;
+        }
+
+        s8 r = scan((u8 *)line, &dst->len, IS_HEX, NULL);
+        if(r != -1)
+        {
+          printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
+          scan((u8 *)line, &dst->len, MARK, (u8 *)&line[(u8)r]);
+          break;
+        }
+
         dst->len /= 2;
         dst->data = _x_to_u8_buffer(line);
         break; }

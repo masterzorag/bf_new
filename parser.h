@@ -22,6 +22,7 @@ enum mode
 {
   CHAR,
   HEX,
+  IS_HEX,
   DUMP,
   FIND,
   COUNT,
