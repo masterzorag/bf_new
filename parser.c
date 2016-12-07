@@ -153,20 +153,21 @@ s8 parse_file(ctx *ctx)
   ssize_t read;
 
   fp = fopen((char *)ctx->word.data, "r");
-  DPRINTF("%s\n", ctx->word.data);
-  if(!fp) return -1;
-
+  DPRINTF("fopen(%s) @%p\n", ctx->word.data, fp);
+  if(!fp)
+  {
+    printf("Can't open file %s\n", ctx->word.data); return -1;
+  }
 
   u8 max = MAX_ELEM;
   if(ctx->word.len)
   {
-    max = ctx->word.len;
-    printf("reading max %d lines\n", max);
+    max = ctx->word.len; DPRINTF("reading max %d lines\n", max);
   }
 
   ctx->cset = malloc(sizeof(set) * max);
   if(!ctx->cset) return -1;
-  //printf("malloc for %zu @%p\n", sizeof(set) * max, ctx->cset);
+  DPRINTF("malloc for %zub @%p\n", sizeof(set) * max, ctx->cset);
 
   /* Step 1
   - read one line at one
@@ -179,16 +180,18 @@ s8 parse_file(ctx *ctx)
   && (idx < max)
   )
   {
+    dst = ctx->cset + idx;
+    dst->data = NULL;
+    dst->len  = 0;
+
     if(line[0] == '#') continue; // skip commented (#) lines
 
     DPRINTF("%2d Retrieved line of length %zu: ", idx, read);
-    line[read -1] = '\n'; // trim newline unconditionally
-    DPRINTF("%s", line);
+    line[read -1] = '\0'; // trim newline unconditionally
+    DPRINTF("%s %zu-%zu\n", line, strlen(line), read);
 
-
-    dst = ctx->cset + idx;
-    dst->len = strlen(line) -1;
-    dst->data = NULL;
+    dst->len = strlen(line);
+    if(!dst->len) break; // exit on empty line
 
     switch(ctx->mode) // check and store
     {
@@ -223,7 +226,7 @@ s8 parse_file(ctx *ctx)
 
     idx++;
   }
-  fclose(fp);
+  fclose(fp); fp = NULL;
 
   /* Step 2
   - setup starting point
@@ -232,6 +235,9 @@ s8 parse_file(ctx *ctx)
   ctx->word.len = idx;
   if(!realloc(ctx->word.data, sizeof(u8) * (idx +1))) return -1;
   *(ctx->word.data + idx) = '\0';
+  DPRINTF("realloc for %zub @%p\n", sizeof(u8) * (idx +1), ctx->word.data);
+
+  // we need to reallocate the charsets too @ctx->cset !
 
   dst = &ctx->word;
   set *d = NULL;
