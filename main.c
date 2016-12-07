@@ -80,32 +80,37 @@ int main(int argc, char **argv)
   }
 
 
+  set *p = NULL;
   if(1) // for verbose
   {
     #ifdef DEBUG
     DPRINTF("report from main, mode %u\n", job.mode);
     for(u8 i = 0; i < job.word.len; i++)
     {
-      DPRINTF("set %2d/%.2d @%p:%d items\n", i, job.word.len, job.cset[i].data, job.cset[i].len);
-      scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL); puts(""); // report
+      p = job.cset + i;
+      DPRINTF("set %2d/%.2d @%p %zub\n", i, job.word.len, p->data, sizeof(u8) * p->len);
+      scan(p->data, &p->len, DUMP, NULL); puts(""); // report
     }
     #endif
+
     /* report the very first word composed, our starting point */
-    scan(job.word.data, &job.word.len, job.mode, NULL); puts("");
+    p = &job.word;
+    scan(p->data, &p->len, job.mode, NULL); puts("");
   }
+  DPRINTF("%zub %zub\n", sizeof(set), sizeof(u8));
   getchar();
 
 
   if(0) // example
   {
-    printf("%s %u\n", job.word.data, job.word.len);
-    scan(job.word.data, &job.word.len, CHAR, NULL);
-    scan(job.word.data, &job.word.len, DUMP, NULL);
-    scan(job.word.data, &job.word.len, HEX,  NULL);
+    printf("%s %u\n", p->data, p->len);
+    scan(p->data, &p->len, CHAR, NULL);
+    scan(p->data, &p->len, DUMP, NULL);
+    scan(p->data, &p->len, HEX,  NULL);
   }
 
   /* main process here */
-  s8 n = job.word.len -1;
+  s8 n = p->len -1;
   u32 c = 1;
 
   while(1) // break it to exit(COMPLETED)
@@ -124,10 +129,10 @@ int main(int argc, char **argv)
         {
           if(job.mode == CHAR)
             /* marked output, for CHAR mode */
-            scan(job.word.data, &job.word.len, MARK_CHAR, &job.word.data[(u8)n]);
+            scan(p->data, &p->len, MARK_CHAR, &job.word.data[(u8)n]);
           else
             /* marked output, for HEX mode */
-            scan(job.word.data, &job.word.len, MARK_HEX, &job.word.data[(u8)n]);
+            scan(p->data, &p->len, MARK_HEX, &job.word.data[(u8)n]);
         }
         else
         { /* standard output, mode based */
@@ -140,13 +145,14 @@ int main(int argc, char **argv)
           else         printf("\n");  /* one-per-line output */
         }
       }
-    } // main output ends
+    } // end main output
 
-    n = job.word.len -1; // reset n to rightmost one
+    n = p->len -1;       // reset n to rightmost one
     c++;                 // and keep count
   }
 
   printf("\n[%u]\n", c); // computed items
   cleanup(&job);
+  p = NULL;
   return 0;
 }
