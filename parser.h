@@ -5,7 +5,8 @@
   bf_new definitions
 */
 
-#define MAX_ELEM (256 /8)
+#define MAX_ELEM        (256 /8)
+#define MIN_STRUCT_ALIGNMENT  8
 
 #ifdef DEBUG
   #define DPRINTF printf
@@ -18,12 +19,17 @@ typedef unsigned int u32;
 typedef char s8;
 typedef unsigned long long int u64;
 
-typedef struct {
-  u8 *data;
-  u8 len;
-} set;
+typedef struct
+__attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
+{
+  u8 *data; //8
+  u8 len;   //1
+            //unused padding
+} set;      //16
 
-typedef struct {
+typedef struct
+__attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
+{
   set word;   // working word
   set *cset;  // many charset
   u8 mode;    // requested mode
