@@ -97,8 +97,7 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         printf("%.2x", *p);
         break;
 
-      case IS_HEX:
-      //printf("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
+      case IS_HEX: //printf("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
         if(!isxdigit(*p)) return i;
         break;
 
@@ -167,11 +166,11 @@ s8 parse_file(ctx *ctx)
 
   ctx->cset = malloc(sizeof(set) * max);
   if(!ctx->cset) return -1;
-  DPRINTF("malloc for %zub @%p\n", sizeof(set) * max, ctx->cset);
+  DPRINTF("malloc  @%p %zub\n", ctx->cset, sizeof(set) * max);
 
   /* Step 1
-  - read one line at one
-  - easy check and store
+    - read one line at once
+    - first check and store
   */
   set *dst = NULL;
   u8 idx   = 0;
@@ -193,21 +192,22 @@ s8 parse_file(ctx *ctx)
     dst->len = strlen(line);
     if(!dst->len) break; // exit on empty line
 
-    switch(ctx->mode) // check and store
+    /* check and store, on requested mode */
+    switch(ctx->mode)
     {
       case CHAR:
-        dst->data = (u8*)strndup(line, dst->len);
+        dst->data = (u8*)strndup(line, dst->len); // store
         break;
 
       case HEX: {
-        if(dst->len %2 || dst->len < 2)
+        if(dst->len %2 || dst->len < 2) // check against lenght
         {
           printf("[!] Line %u: lenght must be even! (is:%u)\n", idx +1, dst->len);
           scan((u8 *)line, &dst->len, CHAR, NULL); puts("");
           break;
         }
 
-        s8 r = scan((u8 *)line, &dst->len, IS_HEX, NULL);
+        s8 r = scan((u8 *)line, &dst->len, IS_HEX, NULL); // check for hex digits
         if(r != -1)
         {
           printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
@@ -216,7 +216,7 @@ s8 parse_file(ctx *ctx)
         }
 
         dst->len /= 2;
-        dst->data = _x_to_u8_buffer(line);
+        dst->data = _x_to_u8_buffer(line); // store
         break; }
     }
     if(!dst->data) return(-1);
@@ -229,15 +229,29 @@ s8 parse_file(ctx *ctx)
   fclose(fp); fp = NULL;
 
   /* Step 2
-  - setup starting point
-  - check for uniqueness
+    - setup tergets lenght
+    - setup starting point
+    - check for uniqueness
+    - realloc sets buffers
   */
   ctx->word.len = idx;
+
+  /* realloc buffers */
   if(!realloc(ctx->word.data, sizeof(u8) * (idx +1))) return -1;
   *(ctx->word.data + idx) = '\0';
-  DPRINTF("realloc for %zub @%p\n", sizeof(u8) * (idx +1), ctx->word.data);
+  DPRINTF("realloc @%p %zub\n", ctx->word.data, sizeof(u8) * (idx +1));
 
-  // we need to reallocate the charsets too @ctx->cset !
+  if(idx != max)
+  {
+    set *tmp = malloc(sizeof(set) * idx);
+    if(!tmp) return -1;
+
+    DPRINTF("realloc @%p %zub\n", tmp, sizeof(set) * idx);
+    memcpy(tmp, ctx->cset, sizeof(set) * idx);
+    free(ctx->cset);
+    ctx->cset = tmp;
+  }
+
 
   dst = &ctx->word;
   set *d = NULL;
