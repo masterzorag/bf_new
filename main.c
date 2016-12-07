@@ -1,7 +1,19 @@
+/*
+  bf_new
+  -------
+  2016, masterzorag@gmail.com
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+
+#include <time.h>
+clock_t startm, stopm;
+#define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
+#define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
+#define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 
 
 void cleanup(ctx *item)
@@ -27,26 +39,15 @@ void change(ctx *ctx, s8 *i)
     p = ctx->word.data + *i;
     d = ctx->cset + *i;
 
-    if(*p == *(d->data + d->len -1)) // last one
-    {//printf("[%2x] ", *p);
-      *p = *d->data;     // first one
-
-      if(*i != 0)
-        *i -= 1;
-      else
-        *i = -1;  // exit(COMPLETED)
-
+    if(*p == *(d->data + d->len -1)) // if p is the last in charset
+    {
+      *p = *d->data;                 // change to first one
+      *i -= 1;
     }
     else
-    {//d = ctx->cset + *i;
-
-      s8 r = scan(d->data, &d->len, FIND, p); // find in charset
-      if(r == -1) // not found !
-      {
-        r = d->len; puts("exception"); getchar(); // trap exceptions
-      }
-
-      *p = *(d->data + r + 1);      // change to next one
+    {
+      s8 r = scan(d->data, &d->len, FIND, p); // find p in charset
+      *p = *(d->data + r + 1);                // change to next one
       break;
     }
   }
@@ -56,81 +57,123 @@ void change(ctx *ctx, s8 *i)
 
 int main(int argc, char **argv)
 {
-  if(!argv[1] || !argv[2])
-  {
-    printf("pass a lenght and a config file\n");
-    exit(EXIT_FAILURE);
-  }
+  DPRINTF("[I] DEBUG build\n");
 
-  ctx job;                          // working context
+  u8 out    = 0;  // 0/1 enables wordlist
+  u8 marked = 0;  // 0/1 enables highligh
+
+  ctx job;        // working context
   job.cset = NULL;
-  job.mode = (argv[3]) ? HEX: CHAR; // setup mode
-  job.word.len = atoi(argv[1]) + 1;
-  job.word.data = malloc(job.word.len);
-  //strncpy((char*)job.word.data, argv[1], job.word.len);
+  job.mode = CHAR;
+  job.word.data = malloc(MAX_ELEM);
   if(!job.word.data) exit(EXIT_FAILURE);
 
-
-  if(0) // example
+  s8 ret = parse_opt(argc, argv, &job);
+  DPRINTF("parse_opt() ret:%d\n", ret);
+  if(ret)
   {
-    u8 *p = NULL;
-    p = _x_to_u8_buffer("c1c627e1638fdc8e24299bb041e4e23af4bb5427"); // store
-    if(!p) exit(EXIT_FAILURE);
-    u8 p_len = 20;
-    scan(p, &p_len, HEX, NULL); // report
-    free(p);
-  }
-
-
-  if(parse_file(argv[2], &job) < 0) // parse file
-  {
-    printf("pass a valid config file, for appropriate mode\n");
     cleanup(&job);
     exit(EXIT_FAILURE);
   }
 
-  printf("report from main, mode %u\n", job.mode);
-  for(u8 i = 0; i < job.word.len; i++)
+  ret = parse_file(&job);
+  DPRINTF("parse_file() ret:%d\n", ret);
+  if(ret < 0)
   {
-    scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL); // report
+    printf("[E] Please recheck and pass a valid config file with -c\n");
+    cleanup(&job);
+    exit(EXIT_FAILURE);
   }
+
+
+  set *p = NULL;
+  if(1) // for verbose
+  {
+    #ifdef DEBUG
+    DPRINTF("report from main, mode %u\n", job.mode);
+    for(u8 i = 0; i < job.word.len; i++)
+    {
+      p = job.cset + i;
+      DPRINTF("set %2d/%.2d @%p %zub\n", i, job.word.len, p->data, sizeof(u8) * p->len);
+      scan(p->data, &p->len, DUMP, NULL); puts(""); // report
+    }
+    #endif
+
+    /* report the very first word composed, our starting point */
+    p = &job.word;
+    scan(p->data, &p->len, job.mode, NULL); puts("");
+  }
+  DPRINTF("%zub %zub\n", sizeof(set), sizeof(u8));
   getchar();
+
 
   if(0) // example
   {
-    printf("%s %u\n", job.word.data, job.word.len);
-
-    scan(job.word.data, &job.word.len, CHAR, NULL);
-    scan(job.word.data, &job.word.len, DUMP, NULL);
-    scan(job.word.data, &job.word.len, HEX,  NULL);
+    printf("%s %u\n", p->data, p->len);
+    scan(p->data, &p->len, CHAR, NULL);
+    scan(p->data, &p->len, DUMP, NULL);
+    scan(p->data, &p->len, HEX,  NULL);
   }
 
-  s8 n = job.word.len -1;
-  u32 c = 0;
-  while(1)
+  /* main process here */
+  s8 n = p->len -1;
+  u32 c = 1;
+
+  while(1) // break it to exit(COMPLETED)
   {
-    if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
+    //if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
 
     change(&job, &n);
 
-    if(n < 0) break;  // exit(COMPLETED)
+    if(n < 0) break; // after that, we start increase word lenght!
 
-    // main output
-    if(job.mode)
-      scan(job.word.data, &job.word.len, HEX, NULL);
-    else
+    if(1) // main output
     {
-//    scan(job.word.data, &job.word.len, CHAR, NULL);
-      scan(job.word.data, &job.word.len, MARK, &job.word.data[(u8)n]);
-//      printf("%s %d\n", job.word.data, job.word.len);
-    }
+//    #define COUNT  1000000 *5
 
-    // reset n to rightmost one
-    n = job.word.len -1;
-    c++;
+      #ifdef COUNT
+      if(c %COUNT == 0) //output only every COUNT attempt
+      #endif
+      {
+        if(marked) // MARKed output
+        {
+          if(job.mode == CHAR)
+            /* marked output, for CHAR mode */
+            scan(p->data, &p->len, MARK_CHAR, &job.word.data[(u8)n]);
+          else
+            /* marked output, for HEX mode */
+            scan(p->data, &p->len, MARK_HEX, &job.word.data[(u8)n]);
+        }
+        else
+        { /* standard output, mode based */
+          scan(p->data, &p->len, job.mode, NULL);
+        }
+
+
+        #ifdef COUNT
+        if(1) // print timing info
+        {
+          STOP;
+          PRINTTIME;
+          printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
+          START;
+        }
+        #endif
+
+        if(1) // output type
+        {
+          if(out == 0) printf("\r");  /* on-the-same-line output */
+          else         printf("\n");  /* one-per-line output */
+        }
+      }
+    } // end main output
+
+    n = p->len -1;       // reset n to rightmost one
+    c++;                 // and keep count
   }
 
-  printf("%d\n", c);
+  printf("\n[%u]\n", c); // computed items
   cleanup(&job);
+  p = NULL;
   return 0;
 }
