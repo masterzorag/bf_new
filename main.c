@@ -9,6 +9,12 @@
 #include <string.h>
 #include "parser.h"
 
+#include <time.h>
+clock_t startm, stopm;
+#define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
+#define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
+#define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
+
 
 void cleanup(ctx *item)
 {
@@ -53,8 +59,8 @@ int main(int argc, char **argv)
 {
   DPRINTF("[I] DEBUG build\n");
 
-  u8 out = 1;     // 0/1 enables wordlist
-  u8 marked = 1;  // 0/1 enables highligh
+  u8 out    = 0;  // 0/1 enables wordlist
+  u8 marked = 0;  // 0/1 enables highligh
 
   ctx job;        // working context
   job.cset = NULL;
@@ -123,7 +129,11 @@ int main(int argc, char **argv)
 
     if(1) // main output
     {
-    //if(c %(1000000 *20) == 0)
+//    #define COUNT  1000000 *5
+
+      #ifdef COUNT
+      if(c %COUNT == 0) //output only every COUNT attempt
+      #endif
       {
         if(marked) // MARKed output
         {
@@ -136,8 +146,19 @@ int main(int argc, char **argv)
         }
         else
         { /* standard output, mode based */
-          scan(job.word.data, &job.word.len, job.mode, NULL);
+          scan(p->data, &p->len, job.mode, NULL);
         }
+
+
+        #ifdef COUNT
+        if(1) // print timing info
+        {
+          STOP;
+          PRINTTIME;
+          printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
+          START;
+        }
+        #endif
 
         if(1) // output type
         {
