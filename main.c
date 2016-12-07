@@ -33,14 +33,14 @@ void change(ctx *ctx, s8 *i)
     p = ctx->word.data + *i;
     d = ctx->cset + *i;
 
-    if(*p == *(d->data + d->len -1)) // last one
+    if(*p == *(d->data + d->len -1)) // if p is the last in charset
     {
-      *p = *d->data;     // change to first one
+      *p = *d->data;                 // change to first one
       *i -= 1;
     }
     else
     {
-      s8 r = scan(d->data, &d->len, FIND, p); // find in charset
+      s8 r = scan(d->data, &d->len, FIND, p); // find p in charset
       *p = *(d->data + r + 1);                // change to next one
       break;
     }
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   u8 out = 1;     // 0/1 enables wordlist
   u8 marked = 1;  // 0/1 enables highligh
 
-  ctx job;                     // working context
+  ctx job;        // working context
   job.cset = NULL;
   job.mode = CHAR;
   job.word.data = malloc(MAX_ELEM);
@@ -82,12 +82,15 @@ int main(int argc, char **argv)
 
   if(1) // for verbose
   {
+    #ifdef DEBUG
     DPRINTF("report from main, mode %u\n", job.mode);
     for(u8 i = 0; i < job.word.len; i++)
     {
       DPRINTF("set %2d/%.2d @%p:%d items\n", i, job.word.len, job.cset[i].data, job.cset[i].len);
       scan(job.cset[i].data, &job.cset[i].len, DUMP, NULL); puts(""); // report
     }
+    #endif
+    /* report the very first word composed, our starting point */
     scan(job.word.data, &job.word.len, job.mode, NULL); puts("");
   }
   getchar();
@@ -104,13 +107,14 @@ int main(int argc, char **argv)
   /* main process here */
   s8 n = job.word.len -1;
   u32 c = 1;
-  while(1)  // break it to exit(COMPLETED)
+
+  while(1) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
 
     change(&job, &n);
 
-    if(n < 0) break;
+    if(n < 0) break; // after that, we start increase word lenght!
 
     if(1) // main output
     {
@@ -119,10 +123,10 @@ int main(int argc, char **argv)
         if(marked) // MARKed output
         {
           if(job.mode == CHAR)
-            /* marked output, for CHAR */
+            /* marked output, for CHAR mode */
             scan(job.word.data, &job.word.len, MARK_CHAR, &job.word.data[(u8)n]);
           else
-            /* marked output, for HEX */
+            /* marked output, for HEX mode */
             scan(job.word.data, &job.word.len, MARK_HEX, &job.word.data[(u8)n]);
         }
         else

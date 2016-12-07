@@ -168,8 +168,12 @@ s8 parse_file(ctx *ctx)
   if(!ctx->cset) return -1;
   //printf("malloc for %zu @%p\n", sizeof(set) * max, ctx->cset);
 
-  u8 idx = 0;
+  /* Step 1
+  - read one line at one
+  - easy check and store
+  */
   set *dst = NULL;
+  u8 idx   = 0;
 
   while((read = getline(&line, &len, fp)) != -1
   && (idx < max)
