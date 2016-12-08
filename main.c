@@ -134,7 +134,7 @@ int main(int argc, char **argv)
     if(1) // main output
     {
       #ifdef COUNT
-      if(c %COUNT == 0) //output only every COUNT attempt
+      if(c %COUNT == 0) // output only every COUNT attempt
       #endif
       {
         if(marked) // MARKed output
@@ -146,8 +146,8 @@ int main(int argc, char **argv)
             /* marked output, for HEX mode */
             scan(p->data, &p->len, MARK_HEX, &job.word.data[(u8)n]);
         }
-        else
-        { /* standard output, mode based */
+        else /* standard output, mode based */
+        {
           scan(p->data, &p->len, job.mode, NULL);
         }
 
