@@ -9,12 +9,16 @@
 #include <string.h>
 #include "parser.h"
 
-#include <time.h>
-clock_t startm, stopm;
-#define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
-#define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
-#define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 
+#define COUNT  (1000000 *5) // enables timing info
+
+#ifdef COUNT
+  #include <time.h>
+  clock_t startm, stopm;
+  #define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
+  #define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
+  #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
+#endif
 
 void cleanup(ctx *item)
 {
@@ -129,8 +133,6 @@ int main(int argc, char **argv)
 
     if(1) // main output
     {
-//    #define COUNT  1000000 *5
-
       #ifdef COUNT
       if(c %COUNT == 0) //output only every COUNT attempt
       #endif
