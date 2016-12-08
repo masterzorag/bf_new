@@ -256,6 +256,7 @@ s8 parse_file(ctx *ctx)
 
   dst = &ctx->word;
   set *d = NULL;
+  u32 estimated = 1;
   for(u8 i = 0; i < idx; i++)
   {
     d = ctx->cset + i;
@@ -277,7 +278,10 @@ s8 parse_file(ctx *ctx)
         return -1;
       }
     }
+
+    estimated *= d->len;
   }
+  printf("[I] Estimated %u combinations\n", estimated);
 
   return idx;
 }
