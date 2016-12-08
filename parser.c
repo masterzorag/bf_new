@@ -79,8 +79,9 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   return 0;
 }
 
-
-s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
+#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
+#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+s8 scan(const u8 *item, const u8 *l, u8 mode, const u8 *dst)
 {
   u8 *p = (u8*)item;
   s8 ret = -1;
@@ -97,7 +98,7 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         printf("%.2x", *p);
         break;
 
-      case IS_HEX: //printf("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
+      case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
         if(!isxdigit(*p)) return i;
         break;
 
@@ -117,21 +118,21 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, u8 *dst)
         break;
 
       case MARK_CHAR: {
-        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
+        if(p == dst) MARKER_ON
         printf("%c", *p);
-        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+        if(p == dst)
         break; }
 
       case MARK_ALL: {
-        if(*p == *dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
+        if(*p == *dst) MARKER_ON
         printf("%c", *p);
-        if(*p == *dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+        if(*p == *dst) MARKER_OFF
         break; }
 
       case MARK_HEX: {
-        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Marker ON
+        if(p == dst) MARKER_ON
         printf("%.2x", *p);
-        if(p == dst) printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+        if(p == dst) MARKER_OFF
         break; }
 
       default :
