@@ -4,6 +4,7 @@
   a binary data gmp import/export sample
 
   https://gmplib.org/manual/Integer-Import-and-Export.html
+  https://gmplib.org/manual/Formatted-Output-Strings.html
 */
 
 #include <stdio.h>
