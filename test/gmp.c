@@ -34,9 +34,8 @@ int main(int argc, char **argv)
 
   mpz_add_ui(z, z, 1);
 
-  mpz_out_str(stdout, 16, z); printf(" ");
-  mpz_out_str(stdout, 10, z); printf("\n");
-
+  gmp_printf("%40Zx\n", z);  // pad to 40 char
+  gmp_printf("%.50Zd\n", z); // pad to 50 char, with 0 leading
 
 //void * mpz_export (void *rop, size_t *countp, int order, size_t size, int endian, size_t nails, const mpz_t op)
 //Fill rop with word data from op
