@@ -131,6 +131,10 @@ int main(int argc, char **argv)
 
     if(n < 0) break; // after that, we start increase word lenght!
 
+    /*
+      compute which one have to change and eventually continue
+    */
+
     if(1) // main output
     {
       #ifdef COUNT

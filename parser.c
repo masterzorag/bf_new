@@ -120,7 +120,7 @@ s8 scan(const u8 *item, const u8 *l, u8 mode, const u8 *dst)
       case MARK_CHAR: {
         if(p == dst) MARKER_ON
         printf("%c", *p);
-        if(p == dst)
+        if(p == dst) MARKER_OFF
         break; }
 
       case MARK_ALL: {
