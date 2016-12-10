@@ -10,7 +10,7 @@
 #include "parser.h"
 
 
-#define COUNT  (1000000 *5) // enables timing info
+//#define COUNT  (1000000 *5) // enables timing info
 
 #ifdef COUNT
   #include <time.h>
@@ -22,36 +22,40 @@
 
 void cleanup(ctx *item)
 {
-  if(item->cset)
+  if(item->idx)
   {
-    for(u8 i = 0; i < item->word.len; i++)
-      if(item->cset[i].data) free(item->cset[i].data);
+    for(u8 i = 0; i < item->wlen; i++)
+      if(item->idx[i]) free(item->idx[i]);
 
-    free(item->cset);
+    free(item->idx);
   }
-  if(item->word.data) free(item->word.data);
+  if(item->word) free(item->word);
 }
 
 
 void change(ctx *ctx, s8 *i)
 {
-  u8  *p = NULL;
-  set *d = NULL;
+  u8 *p = NULL;
+  u8 *d = NULL;
 
   while(*i >= 0)
   {
-    p = ctx->word.data + *i;
-    d = ctx->cset + *i;
+    p = ctx->word + *i;
+    d = ctx->idx[(u8)*i];
 
-    if(*p == *(d->data + d->len -1)) // if p is the last in charset
+    //DPRINTF("change word[%d] : %c -> @%p : %d items\n", *i, *p, d, d[0]);
+    //scan(&d[1], &d[0], DUMP, NULL);          // report
+
+    if(*p == *(d + d[0])) // if p is the last in charset
     {
-      *p = *d->data;                 // change to first one
+      *p = d[1];          // change to first one
       *i -= 1;
     }
     else
     {
-      s8 r = scan(d->data, &d->len, FIND, p); // find p in charset
-      *p = *(d->data + r + 1);                // change to next one
+      s8 r = scan(&d[1], &d[0], FIND, p); // find p in charset
+      //DPRINTF("find %#2x: r=%d -> %c\n", *p, r, *(d + r + 1));
+      *p = *(d + r + 1); // change to next one
       break;
     }
   }
@@ -67,10 +71,9 @@ int main(int argc, char **argv)
   u8 marked = 0;  // 0/1 enables highligh
 
   ctx job;        // working context
-  job.cset = NULL;
   job.mode = CHAR;
-  job.word.data = malloc(MAX_ELEM);
-  if(!job.word.data) exit(EXIT_FAILURE);
+  job.word = malloc(MAX_ELEM);
+  if(!job.word) exit(EXIT_FAILURE);
 
   s8 ret = parse_opt(argc, argv, &job);
   DPRINTF("parse_opt() ret:%d\n", ret);
@@ -90,42 +93,42 @@ int main(int argc, char **argv)
   }
 
 
-  set *p = NULL;
+  u8 *p = NULL;
   if(1) // for verbose
   {
     #ifdef DEBUG
     DPRINTF("report from main, mode %u\n", job.mode);
-    for(u8 i = 0; i < job.word.len; i++)
+    for(u8 i = 0; i < job.wlen; i++)
     {
-      p = job.cset + i;
-      DPRINTF("set %2d/%.2d @%p %zub\n", i, job.word.len, p->data, sizeof(u8) * p->len);
-      scan(p->data, &p->len, DUMP, NULL); puts(""); // report
+      p = job.idx[i];
+      DPRINTF("idx %2d/%.2d @%p : %d items\n", i, job.wlen, p, p[0]);
+      scan(&p[1], &p[0], DUMP, NULL);          // report
     }
     #endif
 
     /* report the very first word composed, our starting point */
-    p = &job.word;
-    scan(p->data, &p->len, job.mode, NULL); puts("");
+    p = job.word;
+    scan(p, &job.wlen, job.mode, NULL); puts("");
   }
-  DPRINTF("%zub %zub\n", sizeof(set), sizeof(u8));
+  DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
   getchar();
 
 
   if(0) // example
   {
-    printf("%s %u\n", p->data, p->len);
-    scan(p->data, &p->len, CHAR, NULL);
-    scan(p->data, &p->len, DUMP, NULL);
-    scan(p->data, &p->len, HEX,  NULL);
+    printf("%s %u\n", p, job.wlen);
+    scan(p, &job.wlen, CHAR, NULL);
+    scan(p, &job.wlen, DUMP, NULL);
+    scan(p, &job.wlen, HEX,  NULL);
   }
 
   /* main process here */
-  s8 n = p->len -1;
+  s8 n = job.wlen -1;
   u32 c = 1;
 
   while(1) // break it to exit(COMPLETED)
   {
-    //if(memcmp(job.word.data, "acqua", job.word.len) == 0) break;
+    //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
 
     change(&job, &n);
 
@@ -145,14 +148,14 @@ int main(int argc, char **argv)
         {
           if(job.mode == CHAR)
             /* marked output, for CHAR mode */
-            scan(p->data, &p->len, MARK_CHAR, &job.word.data[(u8)n]);
+            scan(p, &job.wlen, MARK_CHAR, &p[(u8)n]);
           else
             /* marked output, for HEX mode */
-            scan(p->data, &p->len, MARK_HEX, &job.word.data[(u8)n]);
+            scan(p, &job.wlen, MARK_HEX, &p[(u8)n]);
         }
         else /* standard output, mode based */
         {
-          scan(p->data, &p->len, job.mode, NULL);
+          scan(p, &job.wlen, job.mode, NULL);
         }
 
 
@@ -174,7 +177,7 @@ int main(int argc, char **argv)
       }
     } // end main output
 
-    n = p->len -1;       // reset n to rightmost one
+    n = job.wlen -1;     // reset n to rightmost one
     c++;                 // and keep count
   }
 
