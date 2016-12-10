@@ -22,17 +22,10 @@ typedef unsigned long long int u64;
 typedef struct
 __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
 {
-  u8 *data; //8
-  u8 len;   //1
-            //unused padding
-} set;      //16
-
-typedef struct
-__attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
-{
-  set word;   // working word
-  set *cset;  // many charset
-  u8 mode;    // requested mode
+  u8 *word;   // working word
+  u8 **idx;   // many charset
+  u8  wlen;
+  u8  mode;   // requested mode
 } ctx;
 
 enum mode
@@ -47,9 +40,6 @@ enum mode
   MARK_HEX,
   MARK_ALL
 };
-
-u64 _x_to_u64(const s8 *hex);
-u8 *_x_to_u8_buffer(const s8 *hex);
 
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, u8 mode, const u8 *dst);
