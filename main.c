@@ -20,7 +20,7 @@
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
-void cleanup(ctx *item)
+static void cleanup(ctx *item)
 {
   if(item->idx)
   {
@@ -33,10 +33,9 @@ void cleanup(ctx *item)
 }
 
 
-void change(ctx *ctx, s8 *i)
+static void change(ctx *ctx, s8 *i)
 {
-  u8 *p = NULL;
-  u8 *d = NULL;
+  u8 *p, *d;
 
   while(*i >= 0)
   {
@@ -59,7 +58,7 @@ void change(ctx *ctx, s8 *i)
       break;
     }
   }
-  p = NULL, d = NULL;
+  p = d = NULL;
 }
 
 
