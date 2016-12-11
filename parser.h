@@ -42,7 +42,7 @@ enum mode
 };
 
 s8 parse_opt (int argc, char **argv, ctx *ctx);
-s8 scan(const u8 *item, const u8 *l, u8 mode, const u8 *dst);
+s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst);
 s8 parse_file(ctx *ctx);
 
 #endif // PARSER_H__

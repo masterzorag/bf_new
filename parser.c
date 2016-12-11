@@ -81,7 +81,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 
 #define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
 #define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
-s8 scan(const u8 *item, const u8 *l, u8 mode, const u8 *dst)
+s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
 {
   u8 *p = (u8*)item;
   s8 ret = -1;
@@ -257,6 +257,8 @@ s8 parse_file(ctx *ctx)
     u8 **tmp = malloc(size);
     if(!tmp) return -1;
     DPRINTF("realloc idx\t@%p %zub\n", tmp, size);
+
+    // swap buffers
     memcpy(tmp, ctx->idx, size);
     free(ctx->idx);
     ctx->idx = tmp;
@@ -273,10 +275,10 @@ s8 parse_file(ctx *ctx)
     DPRINTF("idx %2d/%.2d @%p:%d items\n", i, idx, dst, dst[0]);
     u8 *p = NULL;
     s8 count = 0;
-    for(u8 j = 1; j < dst[0] +1; j++)  // scan each charset, from 1
+    for(u8 j = 1; j < dst[0] +1; j++) // scan each charset, from 1
     {
       p = ctx->idx[i] + j;
-      count = scan(&dst[1], &dst[0], COUNT, p) + 1;
+      count = scan(&dst[1], &dst[0], COUNT, p) +1;
       DPRINTF(" %.2d/%.2d\t%#.2x\tcount=%d\n", j, dst[0], *p, count);
       if(count > 1)
       {
