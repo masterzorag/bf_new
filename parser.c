@@ -29,7 +29,7 @@ static u8 *_x_to_u8_buffer(const s8 *hex)
 //  if(len % 2 != 0) return NULL; // (add sanity check in caller)
 
   s8 xtmp[3] = {0, 0, 0};
-  u8 *res = (u8 *)malloc(sizeof(u8) * len);
+  u8 *res = (u8*)malloc(sizeof(u8) * len);
   u8 *ptr = res;
 
   while(len--){
@@ -148,7 +148,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
 s8 parse_file(ctx *ctx)
 {
   FILE *fp;
-  char *line = NULL;
+  char *line  = NULL;
   size_t size = 0;
   ssize_t read;
 
@@ -165,19 +165,17 @@ s8 parse_file(ctx *ctx)
     max = ctx->wlen; DPRINTF("reading max %d lines\n", max);
   }
 
-  // new index
   size = sizeof(u8*) * max;
-  ctx->idx = malloc(size);
+  ctx->idx = malloc(size); // new index data type
   if(!ctx->idx) return -1;
-  DPRINTF("malloc  @%p %zub for %u idx\n", ctx->idx, size, max);
+  DPRINTF("malloc @%p %zub for %u idx\n", ctx->idx, size, max);
 
   /* Step 1
     - read one line at once
     - first check and store
   */
-  u8 *dst = NULL;
-  u8 idx   = 0;
-  u8 len;
+  u8 *p  = NULL;
+  u8 idx = 0, len;
   while((read = getline(&line, &size, fp)) != -1
   && (idx < max)
   )
@@ -190,107 +188,103 @@ s8 parse_file(ctx *ctx)
     DPRINTF("%s %zu-%zu\n", line, strlen(line), read);
 
     len = strlen(line);
-    if(!len) break; // stop on empty line
+    if(!len) break; // stop read, on empty line
 
-    /* check and store, on requested mode */
-    switch(ctx->mode)
+    switch(ctx->mode) /* check and store, on requested mode */
     {
       case CHAR:
-        dst = (u8*)strndup(line, len); // store
+        p = (u8*)strndup(line, len); // store
         break;
 
       case HEX: {
         if(len %2 || len < 2) // check against lenght
         {
           printf("[!] Line %u: lenght must be even! (is:%u)\n", idx +1, len);
-          scan((u8 *)line, &len, CHAR, NULL); puts("");
+          scan((u8*)line, &len, CHAR, NULL); puts("");
           break;
         }
 
-        s8 r = scan((u8 *)line, &len, IS_HEX, NULL); // check for hex digits
+        s8 r = scan((u8*)line, &len, IS_HEX, NULL); // check for hex digits
         if(r != -1)
         {
           printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
-          scan((u8 *)line, &len, MARK_CHAR, (u8 *)&line[(u8)r]); puts("");
+          scan((u8*)line, &len, MARK_CHAR, (u8*)&line[(u8)r]); puts("");
           break;
         }
 
         len /= 2;
-        dst = _x_to_u8_buffer(line); // store
+        p = _x_to_u8_buffer(line); // store
         break; }
     }
-    if(!dst) return(-1);
+    if(!p) return(-1);
 
-    // new index data type:
+    // alloc each new index type:
     size = sizeof(u8) * (len +1);
     ctx->idx[idx] = malloc(size);
     if(!ctx->idx[idx]) return -1;
 
-    memcpy(&ctx->idx[idx][1], dst, len); // store data
-    ctx->idx[idx][0] = len;              // store lenght
+    memcpy(&ctx->idx[idx][1], p, len); // store data
+    ctx->idx[idx][0] = len;            // store lenght
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", idx, max, ctx->idx[idx], size, len);
     //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], DUMP, NULL);          // report
 
     idx++;
   }
-  free(dst); dst = NULL;
   fclose(fp); fp = NULL;
+  free(p); p = NULL;
 
-  /* Step 2
-    - setup tergets lenght
-    - setup starting point
-    - check for uniqueness
-    - realloc sets buffers
-  */
-  ctx->wlen = idx;
+  /* Step 2 */
+  ctx->wlen = idx; // 1. setup tergets lenght
 
-  /* realloc buffers */
-  size = sizeof(u8) * (idx +1);
-  if(!realloc(ctx->word, size)) return -1;
-  *(ctx->word + idx) = '\0';
-  DPRINTF("realloc word\t@%p %zub: %u items\n", ctx->word, size, idx);
-
-  if(idx != max)
+  if(1) /* realloc buffers */
   {
-    size = sizeof(u8*) * idx;
-    u8 **tmp = malloc(size);
-    if(!tmp) return -1;
-    DPRINTF("realloc idx\t@%p %zub\n", tmp, size);
+    size = sizeof(u8) * (idx +1);
+    if(!realloc(ctx->word, size)) return -1; // reuse ctx->word
+    *(ctx->word + idx) = '\0';
+    DPRINTF("realloc word\t@%p %zub: %u items\n", ctx->word, size, idx);
 
-    // swap buffers
-    memcpy(tmp, ctx->idx, size);
-    free(ctx->idx);
-    ctx->idx = tmp;
-  }
-
-
-  u32 estimated = 1;
-  for(u8 i = 0; i < idx; i++)
-  {
-    dst = ctx->idx[i];
-    *(ctx->word + i) = dst[1]; // fill the initial word
-
-    // check if stored charset is unique
-    DPRINTF("idx %2d/%.2d @%p:%d items\n", i, idx, dst, dst[0]);
-    u8 *p = NULL;
-    s8 count = 0;
-    for(u8 j = 1; j < dst[0] +1; j++) // scan each charset, from 1
+    if(idx != max)
     {
-      p = ctx->idx[i] + j;
-      count = scan(&dst[1], &dst[0], COUNT, p) +1;
-      DPRINTF(" %.2d/%.2d\t%#.2x\tcount=%d\n", j, dst[0], *p, count);
-      if(count > 1)
-      {
-        printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
-        scan(&dst[1], &dst[0], MARK_ALL, p); puts("");
-        return -1;
-      }
+      size = sizeof(u8*) * idx;
+      u8 **t = malloc(size);
+      if(!t) return -1;
+      DPRINTF("realloc idx\t@%p %zub\n", t, size);
+      memcpy(t, ctx->idx, size);
+      free(ctx->idx);
+      ctx->idx = t; // swap buffers, for indexes
     }
-
-    estimated *= dst[0];
   }
-  DPRINTF("[I] Estimated %u combinations\n", estimated);
+
+  if(1) /* Step 3 */
+  {
+    u32 estimated = 1;
+    for(u8 i = 0; i < idx; i++)
+    {
+      p = ctx->idx[i]; // address each charset
+
+      *(ctx->word + i) = p[1]; // 1. fill the initial word
+      DPRINTF("idx %2d/%.2d @%p:%d items\n", i, idx, p, p[0]);
+      u8 *d = NULL;
+      s8 count = 0;
+      for(u8 j = 1; j < p[0] +1; j++) // d scan each charset, from 1
+      {
+        d = ctx->idx[i] + j;
+        count = scan(&p[1], &p[0], COUNT, d) +1;
+        //DPRINTF(" %.2d/%.2d\t%#.2x\tcount=%d\n", j, p[0], *d, count);
+
+        if(count > 1) // 2. check if stored charset is unique
+        {
+          printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
+          scan(&p[1], &p[0], MARK_ALL, d); puts("");
+          return -1;
+        }
+      }
+      estimated *= p[0]; // 3. count combinations
+      d = NULL;
+    }
+    DPRINTF("[I] Estimated %u combinations\n", estimated);
+  }
 
   return idx;
 }
