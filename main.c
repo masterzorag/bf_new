@@ -20,16 +20,16 @@
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
-static void cleanup(ctx *item)
+static void cleanup(ctx *p)
 {
-  if(item->idx)
+  if(p->idx)
   {
-    for(u8 i = 0; i < item->wlen; i++)
-      if(item->idx[i]) free(item->idx[i]);
+    for(u8 i = 0; i < p->wlen; i++)
+      if(p->idx[i]) free(p->idx[i]);
 
-    free(item->idx);
+    free(p->idx);
   }
-  if(item->word) free(item->word);
+  if(p->word) free(p->word);
 }
 
 
