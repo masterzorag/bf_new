@@ -1,7 +1,7 @@
 BUILD_TYPE = release
 
 CC     = gcc
-CFLAGS = -I. -std=gnu99 -Wall
+CFLAGS = -I. -std=gnu99 -Wall -O2
 DEPS   = parser.h
 
 ifeq ($(BUILD_TYPE), debug)
