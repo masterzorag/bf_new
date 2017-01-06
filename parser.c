@@ -41,6 +41,20 @@ static u8 *_x_to_u8_buffer(const s8 *hex)
 }
 
 
+// wrapper to release allocated ctx memory
+void cleanup(ctx *p)
+{
+  if(p->idx)
+  {
+    for(u8 i = 0; i < p->wlen; i++)
+      if(p->idx[i]) free(p->idx[i]);
+
+    if(p->idx) free(p->idx);
+  }
+  if(p->word) free(p->word);
+}
+
+
 s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
   int idx, c;

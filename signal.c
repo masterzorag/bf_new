@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include "parser.h"
@@ -22,9 +23,9 @@ void sig_handler(int signo) // use p to access data
     size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
     fclose(fp); fp = NULL;
 
-    printf("written %zub, @%p\n", n, p->word);
-    p = NULL;
-    exit(1);
+    DPRINTF("written %zub, @%p\n", n, p->word);
+    cleanup(p);
+    exit(0);
   }
 }
 

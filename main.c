@@ -21,19 +21,6 @@
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
-static void cleanup(ctx *p)
-{
-  if(p->idx)
-  {
-    for(u8 i = 0; i < p->wlen; i++)
-      if(p->idx[i]) free(p->idx[i]);
-
-    free(p->idx);
-  }
-  if(p->word) free(p->word);
-}
-
-
 static void change(ctx *ctx, s8 *i)
 {
   u8 *p, *d;
