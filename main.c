@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+#include "signal.h"
 
 
 //#define COUNT  (1000000 *5) // enables timing info
@@ -111,10 +112,13 @@ int main(int argc, char **argv)
     scan(p, &job.wlen, job.mode, NULL); puts("");
   }
   DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
-  getchar();
 
+  /* catch signals */
+  setup_signals(&job);
 
-  if(0) // example
+  getchar(); // user pause
+
+  if(0) // disabled example
   {
     printf("%s %u\n", p, job.wlen);
     scan(p, &job.wlen, CHAR, NULL);
