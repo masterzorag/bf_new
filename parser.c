@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "parser.h"
 
-static u64 _x_to_u64(const s8 *hex)
+static u64 _x_to_u64(const char *hex)
 {
   u64 t = 0, res = 0;
   u32 len = strlen(hex);
@@ -23,12 +23,12 @@ static u64 _x_to_u64(const s8 *hex)
 }
 
 
-static u8 *_x_to_u8_buffer(const s8 *hex)
+static u8 *_x_to_u8_buffer(const char *hex)
 {
   u32 len = strlen(hex); // printf("%s %u\n", hex, len);
 //  if(len % 2 != 0) return NULL; // (add sanity check in caller)
 
-  s8 xtmp[3] = {0, 0, 0};
+  char xtmp[3] = {0, 0, 0};
   u8 *res = (u8*)malloc(sizeof(u8) * len);
   u8 *ptr = res;
 
