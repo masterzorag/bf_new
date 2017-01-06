@@ -8,13 +8,25 @@
 static ctx *p = NULL;
 
 
-void sig_handler(int signo) // use p to access data
+static void sig_handler(int signo) // use p to access data
 {
-  if(signo == SIGUSR1)
-    printf("received SIGUSR1\n");
-    // dump the ctx, marking current in charsets
+  if(signo == SIGUSR1) // uses kill -USR
+  {
+    DPRINTF("received SIGUSR1\n");
+    // dump the ctx, marking current item in charsets
+    u8 *d = NULL;
+    for(u8 i = 0; i < p->wlen; i++) // d scan each charset
+    {
+      d = p->idx[i];
+      if(p->mode == CHAR)
+        scan(&d[1], &d[0], MARK_ALL_CHAR, &p->word[i]);
+      else
+        scan(&d[1], &d[0], MARK_ALL_HEX, &p->word[i]);
+      puts("");
+    }
+  }
 
-  if (signo == SIGINT) // get Ctrl-c
+  if(signo == SIGINT) // grab Ctrl-c
   {
     DPRINTF("\nreceived SIGINT\n");
     FILE *fp = fopen(".bf.save", "w");
@@ -31,7 +43,7 @@ void sig_handler(int signo) // use p to access data
 
 void setup_signals(ctx *ctx)
 {
-  printf("send 'kill -USR1 %d' from another term\n", getpid());
+  printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
   p = ctx; // address p
 

@@ -37,8 +37,9 @@ enum mode
   FIND,
   COUNT,
   MARK_CHAR,
+  MARK_ALL_CHAR,
   MARK_HEX,
-  MARK_ALL
+  MARK_ALL_HEX
 };
 
 void cleanup(ctx *p);

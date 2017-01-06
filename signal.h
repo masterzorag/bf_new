@@ -6,7 +6,6 @@
 */
 
 
-void sig_handler(int signo);
 void setup_signals(ctx *ctx);
 
 #endif // SIGNAL_H__

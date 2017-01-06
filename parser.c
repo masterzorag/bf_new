@@ -137,7 +137,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
         if(p == dst) MARKER_OFF
         break; }
 
-      case MARK_ALL: {
+      case MARK_ALL_CHAR: {
         if(*p == *dst) MARKER_ON
         printf("%c", *p);
         if(*p == *dst) MARKER_OFF
@@ -147,6 +147,12 @@ s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
         if(p == dst) MARKER_ON
         printf("%.2x", *p);
         if(p == dst) MARKER_OFF
+        break; }
+
+      case MARK_ALL_HEX: {
+        if(*p == *dst) MARKER_ON
+        printf("%.2x", *p);
+        if(*p == *dst) MARKER_OFF
         break; }
 
       default :
@@ -291,7 +297,7 @@ s8 parse_file(ctx *ctx)
         if(count > 1) // 2. check if stored charset is unique
         {
           printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
-          scan(&p[1], &p[0], MARK_ALL, d); puts("");
+          scan(&p[1], &p[0], MARK_ALL_CHAR, d); puts("");
           return -1;
         }
       }

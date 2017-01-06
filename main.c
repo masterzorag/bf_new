@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   u8 out    = 0;  // 0/1 enables wordlist
   u8 marked = 0;  // 0/1 enables highligh
 
-  ctx job;        // working context
+  ctx job;        // working context init
   job.mode = CHAR;
   job.wlen = 0;
   job.word = malloc(MAX_ELEM);
