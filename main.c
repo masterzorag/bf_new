@@ -71,6 +71,7 @@ int main(int argc, char **argv)
 
   ctx job;        // working context
   job.mode = CHAR;
+  job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
 

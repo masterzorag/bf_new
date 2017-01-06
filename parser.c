@@ -231,6 +231,7 @@ s8 parse_file(ctx *ctx)
 
     idx++;
   }
+  free(line); line = NULL;
   fclose(fp); fp = NULL;
   free(p); p = NULL;
 

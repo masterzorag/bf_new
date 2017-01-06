@@ -16,7 +16,7 @@
 
 typedef unsigned char u8;
 typedef unsigned int u32;
-typedef char s8;
+typedef signed char s8;
 typedef unsigned long long int u64;
 
 typedef struct
@@ -24,7 +24,7 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
 {
   u8 *word;   // working word
   u8 **idx;   // many charset
-  u8  wlen;
+  u8  wlen;   // word length = num of charsets
   u8  mode;   // requested mode
 } ctx;
 
