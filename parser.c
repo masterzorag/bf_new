@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "parser.h"
 
+
 static u64 _x_to_u64(const char *hex)
 {
   u64 t = 0, res = 0;
@@ -44,6 +45,7 @@ static u8 *_x_to_u8_buffer(const char *hex)
 // wrapper to release allocated ctx memory
 void cleanup(ctx *p)
 {
+  if(p->word) free(p->word);
   if(p->idx)
   {
     for(u8 i = 0; i < p->wlen; i++)
@@ -51,26 +53,46 @@ void cleanup(ctx *p)
 
     if(p->idx) free(p->idx);
   }
-  if(p->word) free(p->word);
+}
+
+
+static void help()
+{
+  printf("\n\
+  bruteforge, an advanced wordlist generator\n\
+  -----------\n\n\
+  -c  pass a valid config file\n\
+  -l  set word lenght (default=max possible)\n\
+  -x  use HEX mode (default=CHAR)\n\
+  -b  binary output (default=CHAR)\n\n\
+                 2017, masterzorag@gmail.com\n\
+  run test:\n\
+  $ ./bf -c test/test_2\n\
+  $ ./bf -c test/test_3 -x\n\n");
 }
 
 
 s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
+  if(argc == 1){ help(); return -1;}
+
   int idx, c;
   opterr = 0;
 
-  while((c = getopt(argc, argv, "xc:l:")) != -1)
+  while((c = getopt(argc, argv, "c:l:xh")) != -1)
     switch(c)
     {
+      case 'c':
+        ctx->word = (u8*)strdup(optarg); break;
+
       case 'l':
         ctx->wlen = atoi(optarg); break;
 
       case 'x':
         ctx->mode = HEX; break;
 
-      case 'c':
-        ctx->word = (u8*)strdup(optarg); break;
+      case 'h':
+        help(); return -1;
 
       case '?':
         if(optopt == 'c' || optopt == 'l')
