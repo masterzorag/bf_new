@@ -14,6 +14,9 @@
   #define DPRINTF(...)
 #endif
 
+#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
+#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef signed char s8;
@@ -26,6 +29,7 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
   u8 **idx;   // many charset
   u8  wlen;   // word length = num of charsets
   u8  mode;   // requested mode
+  u8  done;   // lock/sync for signal
 } ctx;
 
 enum mode

@@ -85,7 +85,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  DPRINTF("lvalue = %d, xflag = %d, filename = %s\n", ctx->wlen, ctx->mode, ctx->word);
+  DPRINTF("wlen = %d, xflag = %d, filename = %s\n", ctx->wlen, ctx->mode, ctx->word);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);
@@ -93,8 +93,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   return 0;
 }
 
-#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
-#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+
 s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
 {
   u8 *p = (u8*)item;

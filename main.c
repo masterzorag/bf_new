@@ -57,8 +57,11 @@ int main(int argc, char **argv)
   u8 out    = 0;  // 0/1 enables wordlist
   u8 marked = 0;  // 0/1 enables highligh
 
-  ctx job;        // working context init
+  /* working context init */
+  ctx job;
   job.mode = CHAR;
+  job.idx  = NULL;
+  job.done = 0;
   job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
@@ -117,7 +120,7 @@ int main(int argc, char **argv)
   s8 n = job.wlen -1;
   u32 c = 1;
 
-  while(1) // break it to exit(COMPLETED)
+  while(!job.done) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
 

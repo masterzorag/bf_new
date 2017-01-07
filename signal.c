@@ -7,6 +7,48 @@
 
 static ctx *p = NULL;
 
+static void dump_v1()
+{
+  u8 *d = NULL;
+  for(u8 i = 0; i < p->wlen; i++) // d scan each charset
+  {
+    d = p->idx[i];
+    if(p->mode == CHAR)
+      scan(&d[1], &d[0], MARK_ALL_CHAR, &p->word[i]);
+    else
+      scan(&d[1], &d[0], MARK_ALL_HEX, &p->word[i]);
+    puts("");
+  }
+}
+
+static void dump_v2()
+{
+  u8 row = 0, max = 1, *d = NULL;
+  while(row < max)
+  {
+    for(u8 i = 0; i < p->wlen; i++) // d scan each charset
+    {
+      d = p->idx[i];
+      if(d[0] > max) max = d[0]; // update max if needed
+
+      if(row < d[0])
+      {
+        //if(d[row +1] == p->word[i]) MARKER_ON;
+
+        if(p->mode == CHAR)
+          printf("%c ", d[row +1]);
+        else
+          printf("%.2x", d[row +1]);
+
+        //if(d[row +1] == p->word[i]) MARKER_OFF;
+      }
+      else
+        printf("  ");
+    }
+    puts(""); row++;
+  }
+  sleep(2);
+}
 
 static void sig_handler(int signo) // use p to access data
 {
@@ -14,16 +56,7 @@ static void sig_handler(int signo) // use p to access data
   {
     DPRINTF("received SIGUSR1\n");
     // dump the ctx, marking current item in charsets
-    u8 *d = NULL;
-    for(u8 i = 0; i < p->wlen; i++) // d scan each charset
-    {
-      d = p->idx[i];
-      if(p->mode == CHAR)
-        scan(&d[1], &d[0], MARK_ALL_CHAR, &p->word[i]);
-      else
-        scan(&d[1], &d[0], MARK_ALL_HEX, &p->word[i]);
-      puts("");
-    }
+    dump_v2();
   }
 
   if(signo == SIGINT) // grab Ctrl-c
@@ -36,14 +69,13 @@ static void sig_handler(int signo) // use p to access data
     fclose(fp); fp = NULL;
 
     DPRINTF("written %zub, @%p\n", n, p->word);
-    cleanup(p);
-    exit(0);
+    p->done = 1;
   }
 }
 
 void setup_signals(ctx *ctx)
 {
-  printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
+  DPRINTF("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
   p = ctx; // address p
 
