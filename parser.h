@@ -28,9 +28,10 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
   u8 *word;   // working word
   u8 **idx;   // many charset
   u8  wlen;   // word length = num of charsets
-  u8  mode;   // requested mode
+  u8  mode;   // requested mode (CHAR | HEX)
   u8  done;   // lock/sync for signal
-//u8  pad[5]; // useless, padding
+  u8   bin;   // bin to STDOUT flag
+//u8  pad[4]; // useless, padding
 } ctx;
 
 enum mode
@@ -46,6 +47,7 @@ enum mode
   MARK_ALL
 };
 
+void bin2stdout(ctx *p);
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);

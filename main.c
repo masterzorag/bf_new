@@ -55,12 +55,13 @@ int main(int argc, char **argv)
 {
   DPRINTF("[I] DEBUG build\n");
 
-  u8 out    = 0;  // 0/1 enables wordlist
+  u8 out    = 1;  // 0/1 enables wordlist
   u8 marked = 0;  // 0/1 enables highligh
 
   /* working context init */
   ctx job;
   job.mode = CHAR;
+  job.bin  = 0;
   job.idx  = NULL;
   job.done = 0;
   job.wlen = 0;
@@ -97,12 +98,17 @@ int main(int argc, char **argv)
       scan(&p[1], &p[0], HEXDUMP, NULL);
     }
     #endif
-
-    /* report the very first word composed, our starting point */
-    p = job.word;
-    scan(p, &job.wlen, PRINT, NULL); puts("");
+    DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
   }
-  DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
+
+  /* report the very first word composed, our starting point */
+  p = job.word;
+
+  if(job.bin) bin2stdout(&job);
+  else
+  {
+    scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
+  }
 
   /* catch signals */
   setup_signals(&job);
@@ -142,11 +148,14 @@ int main(int argc, char **argv)
         {
           scan(p, &job.wlen, MARK_ONE, &p[(u8)n]);
         }
+        else if(job.bin) /* bin to STDOUT, mode based */
+        {
+          bin2stdout(&job);
+        }
         else /* standard output, mode based */
         {
           scan(p, &job.wlen, PRINT, NULL);
         }
-
 
         #ifdef COUNT
         if(1) // print timing info
@@ -158,7 +167,7 @@ int main(int argc, char **argv)
         }
         #endif
 
-        if(1) // output type
+        if(!job.bin) // output types
         {
           if(out == 0) printf("\r");  /* on-the-same-line output */
           else         printf("\n");  /* one-per-line output */
@@ -170,7 +179,7 @@ int main(int argc, char **argv)
     c++;                 // and keep count
   }
 
-  printf("\n[%u]\n", c); // computed items
+  if(!job.bin) printf("\n[%u]\n", c); // report computed items
 
   cleanup(&job);
   p = NULL;

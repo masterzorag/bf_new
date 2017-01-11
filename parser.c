@@ -44,6 +44,19 @@ static u8 *_x_to_u8_buffer(const char *hex)
 }
 
 
+// wrapper to bin write to STDOUT
+void bin2stdout(ctx *p)
+{
+  ssize_t n = write(STDOUT_FILENO, p->word, p->wlen);
+
+  if(n != p->wlen) // trap exceptions
+  {
+    printf("not reached"); getchar();
+  }
+}
+
+
+// actually we save on cleanup()
 static size_t save(ctx *p)
 {
   FILE *fp = fopen(".bf.save", "w");
@@ -51,6 +64,7 @@ static size_t save(ctx *p)
 
   size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
   fclose(fp); fp = NULL;
+
   DPRINTF("written %zub, @%p\n", n, p->word);
   return n;
 }
@@ -96,20 +110,15 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   opterr = 0;
   opmode = CHAR;
 
-  while((c = getopt(argc, argv, "c:l:xh")) != -1)
+  while((c = getopt(argc, argv, "c:l:bxh")) != -1)
     switch(c)
     {
-      case 'c':
-        ctx->word = (u8*)strdup(optarg); break;
+      case 'c': ctx->word = (u8*)strdup(optarg); break;
+      case 'l': ctx->wlen = atoi(optarg); break;
 
-      case 'l':
-        ctx->wlen = atoi(optarg); break;
-
-      case 'x':
-        ctx->mode = opmode = HEX; break;
-
-      case 'h':
-        help(); return -1;
+      case 'x': ctx->mode = opmode = HEX; break;
+      case 'b': ctx->bin  = 1; break;
+      case 'h': help(); return -1;
 
       case '?':
         if(optopt == 'c' || optopt == 'l')
@@ -124,7 +133,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  DPRINTF("wlen = %d, xflag = %d, filename = %s\n", ctx->wlen, ctx->mode, ctx->word);
+  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->bin);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);
