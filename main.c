@@ -13,6 +13,7 @@
 
 //#define COUNT  (1000000 *5) // enables timing info
 
+
 #ifdef COUNT
   #include <time.h>
   clock_t startm, stopm;

@@ -53,20 +53,13 @@ static void sig_handler(int signo) // use p to access data
   if(signo == SIGUSR1) // uses kill -USR
   {
     DPRINTF("received SIGUSR1\n");
-    // dump the ctx, marking current item in charsets
-    dump_v2();
+    dump_v1();
+    dump_v2(); // dump the ctx, marking current item in charsets
   }
 
   if(signo == SIGINT) // grab Ctrl-c
   {
     DPRINTF("\nreceived SIGINT\n");
-    FILE *fp = fopen(".bf.save", "w");
-    if(!fp) exit(-1);
-
-    size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
-    fclose(fp); fp = NULL;
-
-    DPRINTF("written %zub, @%p\n", n, p->word);
     p->done = 1;
   }
 }

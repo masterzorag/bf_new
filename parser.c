@@ -44,9 +44,23 @@ static u8 *_x_to_u8_buffer(const char *hex)
 }
 
 
+static size_t save(ctx *p)
+{
+  FILE *fp = fopen(".bf.save", "w");
+  if(!fp) return 0;
+
+  size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
+  fclose(fp); fp = NULL;
+  DPRINTF("written %zub, @%p\n", n, p->word);
+  return n;
+}
+
+
 // wrapper to release allocated ctx memory
 void cleanup(ctx *p)
 {
+  if(p->wlen) save(p); // to resume on next run
+
   if(p->word) free(p->word);
   if(p->idx)
   {
