@@ -93,13 +93,13 @@ int main(int argc, char **argv)
     {
       p = job.idx[i];
       DPRINTF("idx %2d/%.2d @%p : %d items\n", i, job.wlen, p, p[0]);
-      scan(&p[1], &p[0], DUMP, NULL);          // report
+      scan(&p[1], &p[0], HEXDUMP, NULL);
     }
     #endif
 
     /* report the very first word composed, our starting point */
     p = job.word;
-    scan(p, &job.wlen, job.mode, NULL); puts("");
+    scan(p, &job.wlen, PRINT, NULL); puts("");
   }
   DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
 
@@ -111,9 +111,8 @@ int main(int argc, char **argv)
   if(0) // disabled example
   {
     printf("%s %u\n", p, job.wlen);
-    scan(p, &job.wlen, CHAR, NULL);
-    scan(p, &job.wlen, DUMP, NULL);
-    scan(p, &job.wlen, HEX,  NULL);
+    scan(p, &job.wlen, PRINT, NULL);
+    scan(p, &job.wlen, HEXDUMP, NULL);
   }
 
   /* main process here */
@@ -138,18 +137,13 @@ int main(int argc, char **argv)
       if(c %COUNT == 0) // output only every COUNT attempt
       #endif
       {
-        if(marked) // MARKed output
+        if(marked) /* MARKed output */
         {
-          if(job.mode == CHAR)
-            /* marked output, for CHAR mode */
-            scan(p, &job.wlen, MARK_CHAR, &p[(u8)n]);
-          else
-            /* marked output, for HEX mode */
-            scan(p, &job.wlen, MARK_HEX, &p[(u8)n]);
+          scan(p, &job.wlen, MARK_ONE, &p[(u8)n]);
         }
         else /* standard output, mode based */
         {
-          scan(p, &job.wlen, job.mode, NULL);
+          scan(p, &job.wlen, PRINT, NULL);
         }
 
 
@@ -176,6 +170,7 @@ int main(int argc, char **argv)
   }
 
   printf("\n[%u]\n", c); // computed items
+
   cleanup(&job);
   p = NULL;
   return 0;

@@ -6,6 +6,8 @@
 #include "parser.h"
 
 
+static u8 opmode; // CHAR | HEX, for scan()
+
 static u64 _x_to_u64(const char *hex)
 {
   u64 t = 0, res = 0;
@@ -78,6 +80,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 
   int idx, c;
   opterr = 0;
+  opmode = CHAR;
 
   while((c = getopt(argc, argv, "c:l:xh")) != -1)
     switch(c)
@@ -89,7 +92,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         ctx->wlen = atoi(optarg); break;
 
       case 'x':
-        ctx->mode = HEX; break;
+        ctx->mode = opmode = HEX; break;
 
       case 'h':
         help(); return -1;
@@ -116,28 +119,27 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 }
 
 
-s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
+s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 {
   u8 *p = (u8*)item;
   s8 ret = -1;
 
   for(u8 i = 0; i < *l; i++)
   {
-    switch(mode)
+    switch(smode)
     {
-      case CHAR:
-        printf("%c", *p);
-        break;
-
-      case HEX:
-        printf("%.2x", *p);
+      case PRINT:
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         break;
 
       case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
         if(!isxdigit(*p)) return i;
         break;
 
-      case DUMP:
+      case HEXDUMP:
         printf("%.2d/%.2d  ", i, *l);
         if(isprint(*p)) printf("%c\t", *p);
         else            printf(".\t");
@@ -152,27 +154,21 @@ s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
         if(*p == *dst) ret++;
         break;
 
-      case MARK_CHAR: {
+      case MARK_ONE: {
         if(p == dst) MARKER_ON
-        printf("%c", *p);
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         if(p == dst) MARKER_OFF
         break; }
 
-      case MARK_ALL_CHAR: {
+      case MARK_ALL: {
         if(*p == *dst) MARKER_ON
-        printf("%c", *p);
-        if(*p == *dst) MARKER_OFF
-        break; }
-
-      case MARK_HEX: {
-        if(p == dst) MARKER_ON
-        printf("%.2x", *p);
-        if(p == dst) MARKER_OFF
-        break; }
-
-      case MARK_ALL_HEX: {
-        if(*p == *dst) MARKER_ON
-        printf("%.2x", *p);
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         if(*p == *dst) MARKER_OFF
         break; }
 
@@ -249,7 +245,7 @@ s8 parse_file(ctx *ctx)
         if(r != -1)
         {
           printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
-          scan((u8*)line, &len, MARK_CHAR, (u8*)&line[(u8)r]); puts("");
+          scan((u8*)line, &len, MARK_ONE, (u8*)&line[(u8)r]); puts("");
           break;
         }
 
@@ -268,7 +264,7 @@ s8 parse_file(ctx *ctx)
     ctx->idx[idx][0] = len;            // store lenght
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", idx, max, ctx->idx[idx], size, len);
-    //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], DUMP, NULL);          // report
+    //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], HEXDUMP, NULL);          // report
 
     idx++;
   }
@@ -318,7 +314,7 @@ s8 parse_file(ctx *ctx)
         if(count > 1) // 2. check if stored charset is unique
         {
           printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
-          scan(&p[1], &p[0], MARK_ALL_CHAR, d); puts("");
+          scan(&p[1], &p[0], MARK_ALL, d); puts("");
           return -1;
         }
       }

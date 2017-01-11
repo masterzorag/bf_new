@@ -30,25 +30,25 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
   u8  wlen;   // word length = num of charsets
   u8  mode;   // requested mode
   u8  done;   // lock/sync for signal
+//u8  pad[5]; // useless, padding
 } ctx;
 
 enum mode
 {
   CHAR,
   HEX,
+  PRINT,
   IS_HEX,
-  DUMP,
+  HEXDUMP,
   FIND,
   COUNT,
-  MARK_CHAR,
-  MARK_ALL_CHAR,
-  MARK_HEX,
-  MARK_ALL_HEX
+  MARK_ONE,
+  MARK_ALL
 };
 
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
-s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst);
+s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);
 s8 parse_file(ctx *ctx);
 
 #endif // PARSER_H__

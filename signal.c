@@ -13,10 +13,7 @@ static void dump_v1()
   for(u8 i = 0; i < p->wlen; i++) // d scan each charset
   {
     d = p->idx[i];
-    if(p->mode == CHAR)
-      scan(&d[1], &d[0], MARK_ALL_CHAR, &p->word[i]);
-    else
-      scan(&d[1], &d[0], MARK_ALL_HEX, &p->word[i]);
+    scan(&d[1], &d[0], MARK_ALL, &p->word[i]);
     puts("");
   }
 }
@@ -50,6 +47,7 @@ static void dump_v2()
   sleep(2);
 }
 
+
 static void sig_handler(int signo) // use p to access data
 {
   if(signo == SIGUSR1) // uses kill -USR
@@ -72,6 +70,7 @@ static void sig_handler(int signo) // use p to access data
     p->done = 1;
   }
 }
+
 
 void setup_signals(ctx *ctx)
 {
