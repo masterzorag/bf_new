@@ -49,9 +49,9 @@ void bin2stdout(ctx *p)
 {
   ssize_t n = write(STDOUT_FILENO, p->word, p->wlen);
 
-  if(n != p->wlen) // trap exceptions
+  if(n != p->wlen) // trap exceptions on interruption
   {
-    printf("not reached"); getchar();
+    printf("data interrupted"); getchar();
   }
 }
 
@@ -89,16 +89,16 @@ void cleanup(ctx *p)
 static void help()
 {
   printf("\n\
-  bruteforge, an advanced wordlist generator\n\
+  bruteforge %s, an advanced data generator\n\
   -----------\n\n\
   -c  pass a valid config file\n\
-  -l  set word lenght (default=max possible)\n\
-  -x  use HEX mode (default=CHAR)\n\
-  -b  binary output (default=CHAR)\n\n\
-                 2017, masterzorag@gmail.com\n\
+  -l  set word lenght (default = max possible)\n\
+  -x  use HEX mode    (default = CHAR)\n\
+  -b  binary output   (default = no)\n\n\
+                   2017, masterzorag@gmail.com\n\
   run test:\n\
   $ ./bf -c test/test_2\n\
-  $ ./bf -c test/test_3 -x\n\n");
+  $ ./bf -c test/test_3 -x\n\n", VERSION);
 }
 
 
@@ -110,7 +110,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   opterr = 0;
   opmode = CHAR;
 
-  while((c = getopt(argc, argv, "c:l:bxh")) != -1)
+  while((c = getopt(argc, argv, "c:l:bhx")) != -1)
     switch(c)
     {
       case 'c': ctx->word = (u8*)strdup(optarg); break;

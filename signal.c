@@ -50,7 +50,7 @@ static void dump_v2()
 
 static void sig_handler(int signo) // use p to access data
 {
-  if(signo == SIGUSR1) // uses kill -USR
+  if(signo == SIGUSR1) // uses kill -USR1
   {
     DPRINTF("received SIGUSR1\n");
     dump_v1();
