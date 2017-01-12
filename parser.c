@@ -5,7 +5,10 @@
 #include <unistd.h>
 #include "parser.h"
 
-static u64 _x_to_u64(const s8 *hex)
+
+static u8 opmode; // CHAR | HEX, for scan()
+
+static u64 _x_to_u64(const char *hex)
 {
   u64 t = 0, res = 0;
   u32 len = strlen(hex);
@@ -23,12 +26,12 @@ static u64 _x_to_u64(const s8 *hex)
 }
 
 
-static u8 *_x_to_u8_buffer(const s8 *hex)
+static u8 *_x_to_u8_buffer(const char *hex)
 {
   u32 len = strlen(hex); // printf("%s %u\n", hex, len);
 //  if(len % 2 != 0) return NULL; // (add sanity check in caller)
 
-  s8 xtmp[3] = {0, 0, 0};
+  char xtmp[3] = {0, 0, 0};
   u8 *res = (u8*)malloc(sizeof(u8) * len);
   u8 *ptr = res;
 
@@ -41,22 +44,81 @@ static u8 *_x_to_u8_buffer(const s8 *hex)
 }
 
 
+// wrapper to bin write to STDOUT
+void bin2stdout(ctx *p)
+{
+  ssize_t n = write(STDOUT_FILENO, p->word, p->wlen);
+
+  if(n != p->wlen) // trap exceptions on interruption
+  {
+    printf("data interrupted"); getchar();
+  }
+}
+
+
+// actually we save on cleanup()
+static size_t save(ctx *p)
+{
+  FILE *fp = fopen(".bf.save", "w");
+  if(!fp) return 0;
+
+  size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
+  fclose(fp); fp = NULL;
+
+  DPRINTF("written %zub, @%p\n", n, p->word);
+  return n;
+}
+
+
+// wrapper to release allocated ctx memory
+void cleanup(ctx *p)
+{
+  if(p->wlen) save(p); // to resume on next run
+
+  if(p->word) free(p->word);
+  if(p->idx)
+  {
+    for(u8 i = 0; i < p->wlen; i++)
+      if(p->idx[i]) free(p->idx[i]);
+
+    if(p->idx) free(p->idx);
+  }
+}
+
+
+static void help()
+{
+  printf("\n\
+  bruteforge %s, an advanced data generator\n\
+  -----------\n\n\
+  -c  pass a valid config file\n\
+  -l  set word lenght (default = max possible)\n\
+  -x  use HEX mode    (default = CHAR)\n\
+  -b  binary output   (default = no)\n\n\
+                   2017, masterzorag@gmail.com\n\
+  run test:\n\
+  $ ./bf -c test/test_2\n\
+  $ ./bf -c test/test_3 -x\n\n", VERSION);
+}
+
+
 s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
+  if(argc == 1){ help(); return -1;}
+
   int idx, c;
   opterr = 0;
+  opmode = CHAR;
 
-  while((c = getopt(argc, argv, "xc:l:")) != -1)
+  while((c = getopt(argc, argv, "c:l:bhx")) != -1)
     switch(c)
     {
-      case 'l':
-        ctx->wlen = atoi(optarg); break;
+      case 'c': ctx->word = (u8*)strdup(optarg); break;
+      case 'l': ctx->wlen = atoi(optarg); break;
 
-      case 'x':
-        ctx->mode = HEX; break;
-
-      case 'c':
-        ctx->word = (u8*)strdup(optarg); break;
+      case 'x': ctx->mode = opmode = HEX; break;
+      case 'b': ctx->bin  = 1; break;
+      case 'h': help(); return -1;
 
       case '?':
         if(optopt == 'c' || optopt == 'l')
@@ -71,7 +133,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  DPRINTF("lvalue = %d, xflag = %d, filename = %s\n", ctx->wlen, ctx->mode, ctx->word);
+  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->bin);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);
@@ -79,30 +141,28 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   return 0;
 }
 
-#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
-#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
-s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
+
+s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 {
   u8 *p = (u8*)item;
   s8 ret = -1;
 
   for(u8 i = 0; i < *l; i++)
   {
-    switch(mode)
+    switch(smode)
     {
-      case CHAR:
-        printf("%c", *p);
-        break;
-
-      case HEX:
-        printf("%.2x", *p);
+      case PRINT:
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         break;
 
       case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
         if(!isxdigit(*p)) return i;
         break;
 
-      case DUMP:
+      case HEXDUMP:
         printf("%.2d/%.2d  ", i, *l);
         if(isprint(*p)) printf("%c\t", *p);
         else            printf(".\t");
@@ -117,22 +177,22 @@ s8 scan(const u8 *item, const u8 *l, const u8 mode, const u8 *dst)
         if(*p == *dst) ret++;
         break;
 
-      case MARK_CHAR: {
+      case MARK_ONE: {
         if(p == dst) MARKER_ON
-        printf("%c", *p);
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         if(p == dst) MARKER_OFF
         break; }
 
       case MARK_ALL: {
         if(*p == *dst) MARKER_ON
-        printf("%c", *p);
+        if(opmode == CHAR)
+          printf("%c", *p);
+        else
+          printf("%.2x", *p);
         if(*p == *dst) MARKER_OFF
-        break; }
-
-      case MARK_HEX: {
-        if(p == dst) MARKER_ON
-        printf("%.2x", *p);
-        if(p == dst) MARKER_OFF
         break; }
 
       default :
@@ -208,7 +268,7 @@ s8 parse_file(ctx *ctx)
         if(r != -1)
         {
           printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
-          scan((u8*)line, &len, MARK_CHAR, (u8*)&line[(u8)r]); puts("");
+          scan((u8*)line, &len, MARK_ONE, (u8*)&line[(u8)r]); puts("");
           break;
         }
 
@@ -227,10 +287,11 @@ s8 parse_file(ctx *ctx)
     ctx->idx[idx][0] = len;            // store lenght
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", idx, max, ctx->idx[idx], size, len);
-    //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], DUMP, NULL);          // report
+    //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], HEXDUMP, NULL);          // report
 
     idx++;
   }
+  free(line); line = NULL;
   fclose(fp); fp = NULL;
   free(p); p = NULL;
 

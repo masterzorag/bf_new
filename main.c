@@ -8,9 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+#include "signal.h"
 
 
 //#define COUNT  (1000000 *5) // enables timing info
+
 
 #ifdef COUNT
   #include <time.h>
@@ -19,19 +21,6 @@
   #define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
-
-static void cleanup(ctx *p)
-{
-  if(p->idx)
-  {
-    for(u8 i = 0; i < p->wlen; i++)
-      if(p->idx[i]) free(p->idx[i]);
-
-    free(p->idx);
-  }
-  if(p->word) free(p->word);
-}
-
 
 static void change(ctx *ctx, s8 *i)
 {
@@ -66,11 +55,16 @@ int main(int argc, char **argv)
 {
   DPRINTF("[I] DEBUG build\n");
 
-  u8 out    = 0;  // 0/1 enables wordlist
+  u8 out    = 1;  // 0/1 enables wordlist
   u8 marked = 0;  // 0/1 enables highligh
 
-  ctx job;        // working context
+  /* working context init */
+  ctx job;
   job.mode = CHAR;
+  job.bin  = 0;
+  job.idx  = NULL;
+  job.done = 0;
+  job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
 
@@ -101,31 +95,38 @@ int main(int argc, char **argv)
     {
       p = job.idx[i];
       DPRINTF("idx %2d/%.2d @%p : %d items\n", i, job.wlen, p, p[0]);
-      scan(&p[1], &p[0], DUMP, NULL);          // report
+      scan(&p[1], &p[0], HEXDUMP, NULL);
     }
     #endif
-
-    /* report the very first word composed, our starting point */
-    p = job.word;
-    scan(p, &job.wlen, job.mode, NULL); puts("");
+    DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
   }
-  DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
-  getchar();
 
+  /* report the very first word composed, our starting point */
+  p = job.word;
 
-  if(0) // example
+  if(job.bin) bin2stdout(&job);
+  else
+  {
+    scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
+  }
+
+  /* catch signals */
+  setup_signals(&job);
+
+  getchar(); // user pause
+
+  if(0) // disabled example
   {
     printf("%s %u\n", p, job.wlen);
-    scan(p, &job.wlen, CHAR, NULL);
-    scan(p, &job.wlen, DUMP, NULL);
-    scan(p, &job.wlen, HEX,  NULL);
+    scan(p, &job.wlen, PRINT, NULL);
+    scan(p, &job.wlen, HEXDUMP, NULL);
   }
 
   /* main process here */
   s8 n = job.wlen -1;
   u32 c = 1;
 
-  while(1) // break it to exit(COMPLETED)
+  while(!job.done) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
 
@@ -143,20 +144,18 @@ int main(int argc, char **argv)
       if(c %COUNT == 0) // output only every COUNT attempt
       #endif
       {
-        if(marked) // MARKed output
+        if(marked) /* MARKed output */
         {
-          if(job.mode == CHAR)
-            /* marked output, for CHAR mode */
-            scan(p, &job.wlen, MARK_CHAR, &p[(u8)n]);
-          else
-            /* marked output, for HEX mode */
-            scan(p, &job.wlen, MARK_HEX, &p[(u8)n]);
+          scan(p, &job.wlen, MARK_ONE, &p[(u8)n]);
+        }
+        else if(job.bin) /* bin to STDOUT, mode based */
+        {
+          bin2stdout(&job);
         }
         else /* standard output, mode based */
         {
-          scan(p, &job.wlen, job.mode, NULL);
+          scan(p, &job.wlen, PRINT, NULL);
         }
-
 
         #ifdef COUNT
         if(1) // print timing info
@@ -168,7 +167,7 @@ int main(int argc, char **argv)
         }
         #endif
 
-        if(1) // output type
+        if(!job.bin) // output types
         {
           if(out == 0) printf("\r");  /* on-the-same-line output */
           else         printf("\n");  /* one-per-line output */
@@ -180,7 +179,8 @@ int main(int argc, char **argv)
     c++;                 // and keep count
   }
 
-  printf("\n[%u]\n", c); // computed items
+  if(!job.bin) printf("\n[%u]\n", c); // report computed items
+
   cleanup(&job);
   p = NULL;
   return 0;
