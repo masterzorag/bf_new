@@ -5,7 +5,8 @@
   bf_new definitions
 */
 
-#define VERSION          "0.2.4"
+#define VERSION      "0.2.5-dev"
+
 #define MAX_ELEM        (256 /8)
 #define MIN_STRUCT_ALIGNMENT  8
 
@@ -35,7 +36,7 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
 //u8  pad[4]; // useless, padding
 } ctx;
 
-enum mode
+enum smode
 {
   CHAR,
   HEX,
