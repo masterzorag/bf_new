@@ -109,13 +109,12 @@ int main(int argc, char **argv)
   {
     scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
   }
+  getchar(); // user pause
 
   /* catch signals */
   setup_signals(&job);
 
-  getchar(); // user pause
-
-  if(0) // disabled example
+  if(0) // a disabled example
   {
     printf("%s %u\n", p, job.wlen);
     scan(p, &job.wlen, PRINT, NULL);
@@ -175,11 +174,11 @@ int main(int argc, char **argv)
       }
     } // end main output
 
-    n = job.wlen -1;     // reset n to rightmost one
-    c++;                 // and keep count
+    n = job.wlen -1; // reset n to rightmost one
+    c++;             // and keep count
   }
 
-  if(!job.bin) printf("\n[%u]\n", c); // report computed items
+  if(!job.bin) DPRINTF("forged [%u] combinations\n", c);
 
   cleanup(&job);
   p = NULL;
