@@ -101,25 +101,20 @@ int main(int argc, char **argv)
 
   /* report the very first word composed, our starting point */
   p = job.word;
-
   switch(job.out_m)
   {
     case BIN: bin2stdout(&job); break;
-
-    default: // case DRY_RUN:
-      scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
-      break;
+    default:  scan(p, &job.wlen, PRINT, NULL); puts(""); break; /* standard output, mode based */
   }
 
-  if(job.out_m == DRY_RUN)
+  if(job.out_m == DRY_RUN) // report data matrix
   {
-    dump_v2(&job); // this will turn word into last one!
-
+    dump_v2(&job);
     scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
-
     cleanup(&job);
     exit(0);
-  } else getchar(); // user pause
+  }
+  //else getchar(); // ready, user pause
 
   /* catch signals */
   setup_signals(&job);
@@ -128,7 +123,7 @@ int main(int argc, char **argv)
   s8 n = job.wlen -1;
   u32 c = 1;
 
-  while(!job.done) // break it to exit(COMPLETED)
+  while(job.done != DONE) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
 
@@ -148,8 +143,8 @@ int main(int argc, char **argv)
       {
         switch(job.out_m)
         {
-          case BIN: bin2stdout(&job); break; /* bin to STDOUT, mode based */
 //        case MARKED: scan(p, &job.wlen, MARK_ONE, &p[(u8)n]); break;
+          case BIN: bin2stdout(&job); break; /* bin to STDOUT, mode based */
           default:  scan(p, &job.wlen, PRINT, NULL); break; /* standard output, mode based */
         }
 
@@ -168,6 +163,7 @@ int main(int argc, char **argv)
           case QUIET:    printf("\r"); break; /* on-the-same-line output */
           default: break;
         }
+        if(job.done == DUMP) dump_v2(&job);
       }
     } // end main output
 

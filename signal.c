@@ -24,21 +24,21 @@ static void sig_handler(int signo) // use p to access data
   if(signo == SIGUSR1) // uses kill -USR1
   {
     DPRINTF("received SIGUSR1\n");
-    dump_v1();
-    //dump_v2(); // dump the ctx, marking current item in charsets
+    //dump_v1();
+    p->done = DUMP; // dump the ctx, marking current items in charsets
   }
 
   if(signo == SIGINT) // grab Ctrl-c
   {
-    DPRINTF("\nreceived SIGINT\n");
-    p->done = 1;
+    DPRINTF("\nreceived SIGINT\n"); puts("");
+    p->done = DONE;
   }
 }
 
 
 void setup_signals(ctx *ctx)
 {
-  DPRINTF("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
+  if(ctx->out_m == QUIET) printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
   p = ctx; // address p
 
