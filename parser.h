@@ -32,24 +32,33 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
   u8  wlen;   // word length = num of charsets
   u8  mode;   // requested mode (CHAR | HEX)
   u8  done;   // lock/sync for signal
-  u8   bin;   // bin to STDOUT flag
+  u8 out_m;   // output type flag
 //u8  pad[4]; // useless, padding
 } ctx;
 
-enum smode
+enum flags
 {
+  // for main mode
   CHAR,
   HEX,
+  // for scan mode
   PRINT,
   IS_HEX,
   HEXDUMP,
   FIND,
   COUNT,
   MARK_ONE,
-  MARK_ALL
+  MARK_ALL,
+  // for output mode
+  BIN,
+  WORDLIST,
+  DRY_RUN,
+  QUIET,
+  VERBOSE
 };
 
 void bin2stdout(ctx *p);
+void dump_v2(ctx *p);
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);

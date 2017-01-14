@@ -56,6 +56,45 @@ void bin2stdout(ctx *p)
 }
 
 
+// report indexes matrix and turn word into last one!
+void dump_v2(ctx *p)
+{
+  // setup a bounder line
+  size_t max = p->wlen * 3;
+  char *t = malloc(max);
+  t[max] = '\0';
+  u8 i;
+  for(i = 0; i < max; i++) t[i] = '-';
+  printf("%s\n", t);
+
+  max = 1;
+  u8 row = 0, *d = NULL;
+  while(row < max)
+  {
+    for(i = 0; i < p->wlen; i++) // d scan each charset
+    {
+      d = p->idx[i];
+      if(d[0] > max) max = d[0]; // update max if needed
+
+      if(row < d[0])
+      {
+        //if(d[row +1] == p->word[i]) MARKER_ON;
+        if(p->mode == CHAR) printf(" %c ",  d[row +1]);
+        else                printf("%.2x ", d[row +1]);
+        //if(d[row +1] == p->word[i]) MARKER_OFF;
+      }
+      else printf("   ");
+
+      p->word[i] = *(d + d[0]); // store last word possible
+    }
+    puts(""); row++;
+  }
+  // close with another bounder line
+  printf("%s\n", t);
+  free(t); t = NULL;
+}
+
+
 // actually we save on cleanup()
 static size_t save(ctx *p)
 {
@@ -92,13 +131,19 @@ void cleanup(ctx *p)
 static void help()
 {
   printf("\n\
-  bruteforge %s, an advanced data generator\n\
-  -----------\n\n\
+  bruteforge, a selective data combinator.\n\
+  -----------\n\
+  \n\
   -c  pass a valid config file\n\
   -l  set word lenght (default = max possible)\n\
-  -x  use HEX mode    (default = CHAR)\n\
-  -b  binary output   (default = no)\n\n\
-                   2017, masterzorag@gmail.com\n\
+  -x  use HEX mode    (default = CHAR)\n\n\
+  Output:\n\
+  -b  binary output\n\
+  -w  print out wordlist\n\
+  -q  print out changing word\n\
+  \n\
+  v%s, 2017, masterzorag@gmail.com\n\
+  \n\
   run test:\n\
   $ ./bf -c test/test_2\n\
   $ ./bf -c test/test_3 -x\n\n", VERSION);
@@ -109,18 +154,31 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
   if(argc == 1){ help(); return -1;}
 
-  int idx, c;
+  int idx, c, flag_err = 0;
   opterr = 0;
   opmode = CHAR;
 
-  while((c = getopt(argc, argv, "c:l:bhx")) != -1)
+  while((c = getopt(argc, argv, "c:l:xbwqh")) != -1)
     switch(c)
     {
       case 'c': ctx->word = (u8*)strdup(optarg); break;
       case 'l': ctx->wlen = atoi(optarg); break;
 
       case 'x': ctx->mode = opmode = HEX; break;
-      case 'b': ctx->bin  = 1; break;
+
+      case 'b':
+        if(ctx->out_m == DRY_RUN) ctx->out_m = BIN;
+        else flag_err++;
+        break;
+      case 'w':
+        if(ctx->out_m == DRY_RUN) ctx->out_m = WORDLIST;
+        else flag_err++;
+        break;
+      case 'q':
+        if(ctx->out_m == DRY_RUN) ctx->out_m = QUIET;
+        else flag_err++;
+        break;
+
       case 'h': help(); return -1;
 
       case '?':
@@ -135,6 +193,11 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
       default:
         abort();
     }
+
+  if(flag_err)
+  {
+    printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
+  }
 
   DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->bin);
 
@@ -155,10 +218,8 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
     switch(smode)
     {
       case PRINT:
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c", *p);
+        else               printf("%.2x", *p);
         break;
 
       case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
@@ -182,19 +243,15 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 
       case MARK_ONE: {
         if(p == dst) MARKER_ON
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c", *p);
+        else               printf("%.2x", *p);
         if(p == dst) MARKER_OFF
         break; }
 
       case MARK_ALL: {
         if(*p == *dst) MARKER_ON
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c", *p);
+        else               printf("%.2x", *p);
         if(*p == *dst) MARKER_OFF
         break; }
 

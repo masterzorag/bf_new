@@ -55,18 +55,16 @@ int main(int argc, char **argv)
 {
   DPRINTF("[I] DEBUG build\n");
 
-  u8 out    = 1;  // 0/1 enables wordlist
-  u8 marked = 0;  // 0/1 enables highligh
-
   /* working context init */
   ctx job;
   job.mode = CHAR;
-  job.bin  = 0;
   job.idx  = NULL;
   job.done = 0;
   job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
+
+  job.out_m = DRY_RUN; // default
 
   s8 ret = parse_opt(argc, argv, &job);
   DPRINTF("parse_opt() ret:%d\n", ret);
@@ -104,22 +102,27 @@ int main(int argc, char **argv)
   /* report the very first word composed, our starting point */
   p = job.word;
 
-  if(job.bin) bin2stdout(&job);
-  else
+  switch(job.out_m)
   {
-    scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
+    case BIN: bin2stdout(&job); break;
+
+    default: // case DRY_RUN:
+      scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
+      break;
   }
-  getchar(); // user pause
+
+  if(job.out_m == DRY_RUN)
+  {
+    dump_v2(&job); // this will turn word into last one!
+
+    scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
+
+    cleanup(&job);
+    exit(0);
+  } else getchar(); // user pause
 
   /* catch signals */
   setup_signals(&job);
-
-  if(0) // a disabled example
-  {
-    printf("%s %u\n", p, job.wlen);
-    scan(p, &job.wlen, PRINT, NULL);
-    scan(p, &job.wlen, HEXDUMP, NULL);
-  }
 
   /* main process here */
   s8 n = job.wlen -1;
@@ -143,21 +146,14 @@ int main(int argc, char **argv)
       if(c %COUNT == 0) // output only every COUNT attempt
       #endif
       {
-        if(marked) /* MARKed output */
+        switch(job.out_m)
         {
-          scan(p, &job.wlen, MARK_ONE, &p[(u8)n]);
-        }
-        else if(job.bin) /* bin to STDOUT, mode based */
-        {
-          bin2stdout(&job);
-        }
-        else /* standard output, mode based */
-        {
-          scan(p, &job.wlen, PRINT, NULL);
+          case BIN: bin2stdout(&job); break; /* bin to STDOUT, mode based */
+//        case MARKED: scan(p, &job.wlen, MARK_ONE, &p[(u8)n]); break;
+          default:  scan(p, &job.wlen, PRINT, NULL); break; /* standard output, mode based */
         }
 
-        #ifdef COUNT
-        if(1) // print timing info
+        #ifdef COUNT // print timing info
         {
           STOP;
           PRINTTIME;
@@ -166,10 +162,11 @@ int main(int argc, char **argv)
         }
         #endif
 
-        if(!job.bin) // output types
+        switch(job.out_m)
         {
-          if(out == 0) printf("\r");  /* on-the-same-line output */
-          else         printf("\n");  /* one-per-line output */
+          case WORDLIST: printf("\n"); break; /* one-per-line output */
+          case QUIET:    printf("\r"); break; /* on-the-same-line output */
+          default: break;
         }
       }
     } // end main output
@@ -178,7 +175,7 @@ int main(int argc, char **argv)
     c++;             // and keep count
   }
 
-  if(!job.bin) DPRINTF("forged [%u] combinations\n", c);
+  if(job.out_m == QUIET) printf("\nforged [%u] combinations\n", c);
 
   cleanup(&job);
   p = NULL;
