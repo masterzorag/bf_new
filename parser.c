@@ -56,45 +56,6 @@ void bin2stdout(ctx *p)
 }
 
 
-// report indexes matrix and turn word into last one!
-void dump_v2(ctx *p)
-{
-  // setup a bounder line
-  size_t max = p->wlen * 3;
-  char *t = malloc(max);
-  t[max] = '\0';
-  u8 i;
-  for(i = 0; i < max; i++) t[i] = '-';
-  printf("%s\n", t);
-
-  max = 1;
-  u8 row = 0, *d = NULL;
-  while(row < max)
-  {
-    for(i = 0; i < p->wlen; i++) // d scan each charset
-    {
-      d = p->idx[i];
-      if(d[0] > max) max = d[0]; // update max if needed
-
-      if(row < d[0])
-      {
-        //if(d[row +1] == p->word[i]) MARKER_ON;
-        if(p->mode == CHAR) printf(" %c ",  d[row +1]);
-        else                printf("%.2x ", d[row +1]);
-        //if(d[row +1] == p->word[i]) MARKER_OFF;
-      }
-      else printf("   ");
-
-      p->word[i] = *(d + d[0]); // store last word possible
-    }
-    puts(""); row++;
-  }
-  // close with another bounder line
-  printf("%s\n", t);
-  free(t); t = NULL;
-}
-
-
 // actually we save on cleanup()
 static size_t save(ctx *p)
 {
@@ -218,7 +179,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
     switch(smode)
     {
       case PRINT:
-        if(opmode == CHAR) printf("%c", *p);
+        if(opmode == CHAR) printf("%c",   *p);
         else               printf("%.2x", *p);
         break;
 
@@ -243,14 +204,14 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 
       case MARK_ONE: {
         if(p == dst) MARKER_ON
-        if(opmode == CHAR) printf("%c", *p);
+        if(opmode == CHAR) printf("%c",   *p);
         else               printf("%.2x", *p);
         if(p == dst) MARKER_OFF
         break; }
 
       case MARK_ALL: {
         if(*p == *dst) MARKER_ON
-        if(opmode == CHAR) printf("%c", *p);
+        if(opmode == CHAR) printf("%c",   *p);
         else               printf("%.2x", *p);
         if(*p == *dst) MARKER_OFF
         break; }
@@ -262,6 +223,50 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
   }
 
   return ret;
+}
+
+
+// report indexes matrix
+void dump_v2(ctx *p)
+{
+  // setup a bounder line
+  size_t max = p->wlen * 3;
+  char *t = malloc(max);
+  t[max] = '\0';
+  u8 i;
+  for(i = 0; i < max; i++) t[i] = '-';
+  printf("%s\n", t);
+
+  if(p->done == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); }
+
+  max = 1;
+  u8 row = 0, *d = NULL;
+  while(row < max)
+  {
+    for(i = 0; i < p->wlen; i++) // d scan each charset
+    {
+      d = p->idx[i];
+      if(d[0] > max) max = d[0]; // update max if needed
+
+      if(row < d[0]) // we have an item
+      {
+        if((p->done == DUMP) && (d[row +1] == p->word[i])) MARKER_ON;
+
+        if(p->mode == CHAR) printf(" %c ",  d[row +1]);
+        else                printf("%.2x ", d[row +1]);
+
+        if((p->done == DUMP) && (d[row +1] == p->word[i])) MARKER_OFF;
+      }
+      else printf("   ");
+
+      if(p->out_m == DRY_RUN) p->word[i] = *(d + d[0]); // store last word possible
+    }
+    puts(""); row++;
+  }
+  printf("%s\n", t); // close with another bounder line
+  free(t); t = NULL;
+
+  if(p->done == DUMP) p->done = 0; // revert flag back to working
 }
 
 
@@ -402,7 +407,8 @@ s8 parse_file(ctx *ctx)
       estimated *= p[0]; // 3. count combinations
       d = NULL;
     }
-    DPRINTF("[I] Estimated %u combinations\n", estimated);
+
+    if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
   }
 
   return max;

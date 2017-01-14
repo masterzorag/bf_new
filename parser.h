@@ -31,7 +31,7 @@ __attribute__((packed, aligned(MIN_STRUCT_ALIGNMENT)))
   u8 **idx;   // many charset
   u8  wlen;   // word length = num of charsets
   u8  mode;   // requested mode (CHAR | HEX)
-  u8  done;   // lock/sync for signal
+  u8  done;   // lock/sync for signals
   u8 out_m;   // output type flag
 //u8  pad[4]; // useless, padding
 } ctx;
@@ -54,7 +54,9 @@ enum flags
   WORDLIST,
   DRY_RUN,
   QUIET,
-  VERBOSE
+  // for signals
+  DONE,
+  DUMP
 };
 
 void bin2stdout(ctx *p);
