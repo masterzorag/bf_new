@@ -41,7 +41,7 @@ enum flags
   // for main mode
   CHAR,
   HEX,
-  // for scan mode
+  // for scan() mode
   PRINT,
   IS_HEX,
   FIND,
@@ -52,7 +52,7 @@ enum flags
   // for output mode
   BIN,
   WORDLIST,
-  DRY_RUN,
+  DRY_RUN, // default
   QUIET,
   // for signals
   DONE,

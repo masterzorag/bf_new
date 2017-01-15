@@ -101,7 +101,7 @@ static void help()
   Output:\n\
   -b  binary output\n\
   -w  print out wordlist\n\
-  -q  print out changing word\n\
+  -q  quiet run\n\
   \n\
   v%s, 2017, masterzorag@gmail.com\n\
   \n\
@@ -127,18 +127,9 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 
       case 'x': ctx->mode = opmode = HEX; break;
 
-      case 'b':
-        if(ctx->out_m == DRY_RUN) ctx->out_m = BIN;
-        else flag_err++;
-        break;
-      case 'w':
-        if(ctx->out_m == DRY_RUN) ctx->out_m = WORDLIST;
-        else flag_err++;
-        break;
-      case 'q':
-        if(ctx->out_m == DRY_RUN) ctx->out_m = QUIET;
-        else flag_err++;
-        break;
+      case 'b': flag_err++, ctx->out_m = BIN;      break;
+      case 'w': flag_err++, ctx->out_m = WORDLIST; break;
+      case 'q': flag_err++, ctx->out_m = QUIET;    break;
 
       case 'h': help(); return -1;
 
@@ -155,7 +146,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  if(flag_err)
+  if(flag_err > 1) // accept just one output flag!
   {
     printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
   }
