@@ -407,6 +407,6 @@ s8 parse_file(ctx *ctx)
     if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
   }
 
-  return max;
+  return 0;
 }
 

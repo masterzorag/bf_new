@@ -59,28 +59,26 @@ int main(int argc, char **argv)
   ctx job;
   job.mode = CHAR;
   job.idx  = NULL;
-  job.done = 0;
   job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
 
   job.out_m = DRY_RUN; // default
 
-  s8 ret = parse_opt(argc, argv, &job);
-  DPRINTF("parse_opt() ret:%d\n", ret);
-  if(ret)
+  job.done = parse_opt(argc, argv, &job);
+  DPRINTF("parse_opt() ret:%d\n", job.done);
+  if(job.done)
   {
     cleanup(&job); exit(EXIT_FAILURE);
   }
 
-  ret = parse_file(&job);
-  DPRINTF("parse_file() ret:%d\n", ret);
-  if(ret < 0)
+  job.done = parse_file(&job);
+  DPRINTF("parse_file() ret:%d\n", job.done); //parsefile should ret 0 on error
+  if(job.done)
   {
     printf("[E] Please recheck and pass a valid config file with -c\n");
     cleanup(&job); exit(EXIT_FAILURE);
   }
-
 
   u8 *p = NULL;
   if(1) // for verbose
