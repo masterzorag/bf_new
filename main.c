@@ -122,16 +122,13 @@ int main(int argc, char **argv)
   while(job.done != DONE) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
-
     change(&job, &n);
 
-    if(n < 0) break; // after that, we start increase word lenght!
-
+    if(n < 0){ job.done = DONE; break; } // after that, we start increase word lenght!
     /*
       compute which one have to change and eventually continue
       something like n = find(word);
     */
-
     if(1) // main output
     {
       #ifdef COUNT

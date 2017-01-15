@@ -75,7 +75,7 @@ void cleanup(ctx *p)
 {
   /* save to resume on next run
      note: if(job.done), word is turned in the first one by change()! */
-  if(p->wlen) save(p);
+  if(p->done == DONE) save(p);
 
   /* clean free()s */
   if(p->word) free(p->word);
