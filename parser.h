@@ -19,9 +19,9 @@
 #define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
 #define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
 
+typedef signed   char s8;
 typedef unsigned char u8;
 typedef unsigned int u32;
-typedef signed char s8;
 typedef unsigned long long int u64;
 
 typedef struct
@@ -44,9 +44,9 @@ enum flags
   // for scan mode
   PRINT,
   IS_HEX,
-  HEXDUMP,
   FIND,
   COUNT,
+  HEXDUMP,
   MARK_ONE,
   MARK_ALL,
   // for output mode
@@ -60,7 +60,7 @@ enum flags
 };
 
 void bin2stdout(ctx *p);
-void dump_v2(ctx *p);
+void dump_matrix(ctx *p);
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);

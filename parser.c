@@ -183,8 +183,13 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
         else               printf("%.2x", *p);
         break;
 
-      case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
-        if(!isxdigit(*p)) return i;
+      case IS_HEX: if(!isxdigit(*p)) return i;
+        break;
+
+      case FIND:   if(*p == *dst) return i +1;
+        break;
+
+      case COUNT:  if(*p == *dst) ret++;
         break;
 
       case HEXDUMP:
@@ -192,14 +197,6 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
         if(isprint(*p)) printf("%c\t", *p);
         else            printf(".\t");
         printf("0x%.2x %.3d\n", *p, *p);
-        break;
-
-      case FIND:
-        if(*p == *dst) return i +1;
-        break;
-
-      case COUNT:
-        if(*p == *dst) ret++;
         break;
 
       case MARK_ONE: {
@@ -216,8 +213,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
         if(*p == *dst) MARKER_OFF
         break; }
 
-      default :
-        break;
+      default: break;
     }
     p++;
   }
@@ -227,7 +223,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 
 
 // report indexes matrix
-void dump_v2(ctx *p)
+void dump_matrix(ctx *p)
 {
   // setup a bounder line
   size_t max = p->wlen * 3;

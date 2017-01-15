@@ -70,8 +70,7 @@ int main(int argc, char **argv)
   DPRINTF("parse_opt() ret:%d\n", ret);
   if(ret)
   {
-    cleanup(&job);
-    exit(EXIT_FAILURE);
+    cleanup(&job); exit(EXIT_FAILURE);
   }
 
   ret = parse_file(&job);
@@ -79,8 +78,7 @@ int main(int argc, char **argv)
   if(ret < 0)
   {
     printf("[E] Please recheck and pass a valid config file with -c\n");
-    cleanup(&job);
-    exit(EXIT_FAILURE);
+    cleanup(&job); exit(EXIT_FAILURE);
   }
 
 
@@ -99,20 +97,20 @@ int main(int argc, char **argv)
     DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
   }
 
-  /* report the very first word composed, our starting point */
   p = job.word;
-  switch(job.out_m)
+  switch(job.out_m) /* report the very first word composed, our starting point */
   {
     case BIN: bin2stdout(&job); break;
-    default:  scan(p, &job.wlen, PRINT, NULL); puts(""); break; /* standard output, mode based */
+    default:  scan(p, &job.wlen, PRINT, NULL); puts(""); break;
   }
 
   if(job.out_m == DRY_RUN) // report data matrix
   {
-    dump_v2(&job);
-    scan(p, &job.wlen, PRINT, NULL); puts(""); /* standard output, mode based */
-    cleanup(&job);
-    exit(0);
+    dump_matrix(&job);
+    // in this case word is turned into the last one, report again
+    scan(p, &job.wlen, PRINT, NULL); puts("");
+
+    cleanup(&job); exit(0);
   }
   //else getchar(); // ready, user pause
 
@@ -133,6 +131,7 @@ int main(int argc, char **argv)
 
     /*
       compute which one have to change and eventually continue
+      something like n = find(word);
     */
 
     if(1) // main output
@@ -163,7 +162,7 @@ int main(int argc, char **argv)
           case QUIET:    printf("\r"); break; /* on-the-same-line output */
           default: break;
         }
-        if(job.done == DUMP) dump_v2(&job);
+        if(job.done == DUMP) dump_matrix(&job); // SIGUSR1 output
       }
     } // end main output
 

@@ -24,7 +24,6 @@ static void sig_handler(int signo) // use p to access data
   if(signo == SIGUSR1) // uses kill -USR1
   {
     DPRINTF("received SIGUSR1\n");
-    //dump_v1();
     p->done = DUMP; // dump the ctx, marking current items in charsets
   }
 
@@ -38,9 +37,9 @@ static void sig_handler(int signo) // use p to access data
 
 void setup_signals(ctx *ctx)
 {
-  if(ctx->out_m == QUIET) printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
-
   p = ctx; // address p
+
+  if(ctx->out_m == QUIET) printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
   if(signal(SIGUSR1, sig_handler) == SIG_ERR) printf("\ncan't catch SIGUSR1\n");
 
