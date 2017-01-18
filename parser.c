@@ -74,8 +74,8 @@ static size_t save(ctx *p)
 void cleanup(ctx *p)
 {
   /* save to resume on next run
-     note: if(job.done), word is turned in the first one by change()! */
-  if(p->done == DONE) save(p);
+     note: in a completed run, word is turned into the first one by change()! */
+  if(p->work == DONE) save(p);
 
   /* clean free()s */
   if(p->word) free(p->word);
@@ -124,7 +124,6 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
     {
       case 'c': ctx->word = (u8*)strdup(optarg); break;
       case 'l': ctx->wlen = atoi(optarg); break;
-
       case 'x': ctx->mode = opmode = HEX; break;
 
       case 'b': flag_err++, ctx->out_m = BIN;      break;
@@ -132,7 +131,6 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
       case 'q': flag_err++, ctx->out_m = QUIET;    break;
 
       case 'h': help(); return -1;
-
       case '?':
         if(optopt == 'c' || optopt == 'l')
           fprintf(stderr, "Option -%c requires an argument.\n", optopt);
@@ -151,7 +149,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
     printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
   }
 
-  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->bin);
+  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->out_m);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);
@@ -224,7 +222,7 @@ void dump_matrix(ctx *p)
   for(i = 0; i < max; i++) t[i] = '-';
   printf("%s\n", t);
 
-  if(p->done == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); }
+  if(p->work == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); } // report current
 
   max = 1;
   u8 row = 0, *d = NULL;
@@ -237,12 +235,12 @@ void dump_matrix(ctx *p)
 
       if(row < d[0]) // we have an item
       {
-        if((p->done == DUMP) && (d[row +1] == p->word[i])) MARKER_ON;
+        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_ON;
 
         if(p->mode == CHAR) printf(" %c ",  d[row +1]);
         else                printf("%.2x ", d[row +1]);
 
-        if((p->done == DUMP) && (d[row +1] == p->word[i])) MARKER_OFF;
+        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_OFF;
       }
       else printf("   ");
 
@@ -253,7 +251,7 @@ void dump_matrix(ctx *p)
   printf("%s\n", t); // close with another bounder line
   free(t); t = NULL;
 
-  if(p->done == DUMP) p->done = 0; // revert flag back to working
+  if(p->work == DUMP) p->work = 0; // revert flag back to working
 }
 
 
@@ -297,7 +295,7 @@ s8 parse_file(ctx *ctx)
     DPRINTF("%2d Retrieved line of length %zu: ", i, read);
     line[read -1] = '\0'; // trim newline unconditionally
     len = strlen(line);
-    DPRINTF("%s %u-%zu\n", line, len, read);
+    DPRINTF("[%s] %u-%zu\n", line, len, read);
 
     if(!len) break; // stop read, on empty line
 
@@ -337,7 +335,9 @@ s8 parse_file(ctx *ctx)
     ctx->idx[i][0] = len;            // store lenght
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", i, max, ctx->idx[i], size, len);
-    //scan(&ctx->idx[i][1], &ctx->idx[i][0], HEXDUMP, NULL);          // report
+    #ifdef DEBUG
+      scan(&ctx->idx[i][1], &ctx->idx[i][0], HEXDUMP, NULL);          // report
+    #endif
 
     i++;
   }
@@ -353,14 +353,14 @@ s8 parse_file(ctx *ctx)
     size = sizeof(u8) * (i +1);
     if(!realloc(ctx->word, size)) return -1; // reuse ctx->word
     *(ctx->word + i) = '\0';
-    DPRINTF("realloc word\t@%p %zub: %u items\n", ctx->word, size, i);
+    DPRINTF("realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
 
     if(i != max)
     {
       size = sizeof(u8*) * i;
       u8 **t = malloc(size);
       if(!t) return -1;
-      DPRINTF("realloc idx\t@%p %zub\n", t, size);
+      DPRINTF("realloc %d idx\t@%p %zub\n", i, t, size);
       memcpy(t, ctx->idx, size);
       free(ctx->idx);
       ctx->idx = t; // swap buffers, for indexes
@@ -375,7 +375,7 @@ s8 parse_file(ctx *ctx)
       p = ctx->idx[i]; // address each charset
 
       *(ctx->word + i) = p[1]; // 1. fill the initial word
-      DPRINTF("idx %2d/%.2d @%p:%d items\n", i, ctx->wlen, p, p[0]);
+      DPRINTF("idx %2d/%.2d @%p:\t%d items\n", i, ctx->wlen, p, p[0]);
       u8 *d = NULL;
       s8 count = 0;
       for(u8 j = 1; j < p[0] +1; j++) // d scan each charset, from 1

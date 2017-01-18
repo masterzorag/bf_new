@@ -1,7 +1,7 @@
 /*
   bf_new
   -------
-  2016, masterzorag@gmail.com
+  2016, 2017, masterzorag@gmail.com
 */
 
 #include <stdio.h>
@@ -65,16 +65,16 @@ int main(int argc, char **argv)
 
   job.out_m = DRY_RUN; // default
 
-  job.done = parse_opt(argc, argv, &job);
-  DPRINTF("parse_opt() ret:%d\n", job.done);
-  if(job.done)
+  job.work = parse_opt(argc, argv, &job);
+  DPRINTF("parse_opt()\tret:%d\n", job.work);
+  if(job.work)
   {
     cleanup(&job); exit(EXIT_FAILURE);
   }
 
-  job.done = parse_file(&job);
-  DPRINTF("parse_file() ret:%d\n", job.done); //parsefile should ret 0 on error
-  if(job.done)
+  job.work = parse_file(&job);
+  DPRINTF("parse_file()\tret:%d\n", job.work);
+  if(job.work)
   {
     printf("[E] Please recheck and pass a valid config file with -c\n");
     cleanup(&job); exit(EXIT_FAILURE);
@@ -88,11 +88,12 @@ int main(int argc, char **argv)
     for(u8 i = 0; i < job.wlen; i++)
     {
       p = job.idx[i];
-      DPRINTF("idx %2d/%.2d @%p : %d items\n", i, job.wlen, p, p[0]);
+      DPRINTF("idx %2d/%.2d @%p:\t%d items\n", i, job.wlen, p, p[0]);
       scan(&p[1], &p[0], HEXDUMP, NULL);
     }
-    #endif
     DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
+    DPRINTF("[I] config passed, report data matrix:\n");
+    #endif
   }
 
   p = job.word;
@@ -116,15 +117,15 @@ int main(int argc, char **argv)
   setup_signals(&job);
 
   /* main process here */
-  s8 n = job.wlen -1;
+  s8  n = job.wlen -1;
   u32 c = 1;
 
-  while(job.done != DONE) // break it to exit(COMPLETED)
+  while(1) // break it to exit(COMPLETED)
   {
     //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
     change(&job, &n);
 
-    if(n < 0){ job.done = DONE; break; } // after that, we start increase word lenght!
+    if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
     /*
       compute which one have to change and eventually continue
       something like n = find(word);
@@ -157,7 +158,10 @@ int main(int argc, char **argv)
           case QUIET:    printf("\r"); break; /* on-the-same-line output */
           default: break;
         }
-        if(job.done == DUMP) dump_matrix(&job); // SIGUSR1 output
+
+        if(job.work == DUMP) dump_matrix(&job); // -USR1 output
+        else if(job.work == DONE) break;
+
       }
     } // end main output
 
@@ -165,7 +169,10 @@ int main(int argc, char **argv)
     c++;             // and keep count
   }
 
-  if(job.out_m == QUIET) printf("\nforged [%u] combinations\n", c);
+  #ifndef DEBUG
+  if(job.out_m == QUIET)
+  #endif
+    printf("\nforged [%u] combinations\n", c);
 
   cleanup(&job);
   p = NULL;
