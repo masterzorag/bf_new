@@ -5,6 +5,6 @@ the bruteforge rewrite
 
 [Wiki](https://github.com/masterzorag/bf_new/wiki)
 
-development on [PR](https://github.com/masterzorag/bf_new/pull/7) at next-version [branch](https://github.com/masterzorag/bf_new/tree/0.2.5)
+development on [PR](https://github.com/masterzorag/bf_new/pull/8) at next-version [branch](https://github.com/masterzorag/bf_new/tree/0.2.6)
 
 https://masterzorag.github.io/bf_new
