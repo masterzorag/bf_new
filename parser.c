@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 #include "parser.h"
 
 
@@ -73,8 +74,11 @@ static size_t save(ctx *p)
 // wrapper to release allocated ctx memory
 void cleanup(ctx *p)
 {
-  if(p->wlen) save(p); // to resume on next run
+  /* save to resume on next run
+     note: in a completed run, word is turned into the first one by change()! */
+  if(p->work == DONE) save(p);
 
+  /* clean free()s */
   if(p->word) free(p->word);
   if(p->idx)
   {
@@ -89,16 +93,46 @@ void cleanup(ctx *p)
 static void help()
 {
   printf("\n\
-  bruteforge %s, an advanced data generator\n\
-  -----------\n\n\
+  bruteforge, a selective data combinator.\n\
+  -----------\n\
+  \n\
   -c  pass a valid config file\n\
   -l  set word lenght (default = max possible)\n\
-  -x  use HEX mode    (default = CHAR)\n\
-  -b  binary output   (default = no)\n\n\
-                   2017, masterzorag@gmail.com\n\
+  -x  use HEX mode    (default = CHAR)\n\n\
+  Output:\n\
+  -b  binary output\n\
+  -w  print out wordlist\n\
+  -q  quiet run\n\
+  \n\
+  v%s, 2017, masterzorag@gmail.com\n\
+  \n\
   run test:\n\
   $ ./bf -c test/test_2\n\
   $ ./bf -c test/test_3 -x\n\n", VERSION);
+}
+
+
+/*
+  unset LANG LC_ALL; LC_CTYPE=en_US.iso88591 export LC_CTYPE
+*/
+static s8 setup_locale(void)
+{
+  char *res;
+
+  /* Get the name of the current locale. */
+  res = setlocale (LC_ALL, "");   // set user default
+  res = setlocale (LC_ALL, NULL); // query result
+  DPRINTF("LC_ALL: %s\n", res);
+  if(!res) { printf("error"); return -1; }
+
+  res = setlocale (LC_CTYPE, "en_US.iso88591"); // try to set codepage
+  if(!res) { printf("[E] error setting locale!"); return -1; }
+
+  res = setlocale (LC_CTYPE, NULL); // to check, now query
+  DPRINTF("LC_CTYPE: %s\n", res);
+  if(!res) { printf("[E] error setting locale!"); return -1; }
+
+  return 0;
 }
 
 
@@ -106,20 +140,24 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
   if(argc == 1){ help(); return -1;}
 
-  int idx, c;
+  if(setup_locale()) return -1;
+
+  int idx, c, flag_err = 0;
   opterr = 0;
   opmode = CHAR;
 
-  while((c = getopt(argc, argv, "c:l:bhx")) != -1)
+  while((c = getopt(argc, argv, "c:l:xbwqh")) != -1)
     switch(c)
     {
       case 'c': ctx->word = (u8*)strdup(optarg); break;
       case 'l': ctx->wlen = atoi(optarg); break;
-
       case 'x': ctx->mode = opmode = HEX; break;
-      case 'b': ctx->bin  = 1; break;
-      case 'h': help(); return -1;
 
+      case 'b': flag_err++, ctx->out_m = BIN;      break;
+      case 'w': flag_err++, ctx->out_m = WORDLIST; break;
+      case 'q': flag_err++, ctx->out_m = QUIET;    break;
+
+      case 'h': help(); return -1;
       case '?':
         if(optopt == 'c' || optopt == 'l')
           fprintf(stderr, "Option -%c requires an argument.\n", optopt);
@@ -133,7 +171,12 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
         abort();
     }
 
-  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->bin);
+  if(flag_err > 1) // accept just one output flag!
+  {
+    printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
+  }
+
+  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->out_m);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);
@@ -152,14 +195,17 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
     switch(smode)
     {
       case PRINT:
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c",   *p);
+        else               printf("%.2x", *p);
         break;
 
-      case IS_HEX: // DPRINTF("%.2d/%.2d  %2x %d\n", i, *l, *p, isxdigit(*p));
-        if(!isxdigit(*p)) return i;
+      case IS_HEX: if(!isxdigit(*p)) return i;
+        break;
+
+      case FIND:   if(*p == *dst) return i +1;
+        break;
+
+      case COUNT:  if(*p == *dst) ret++;
         break;
 
       case HEXDUMP:
@@ -169,39 +215,70 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
         printf("0x%.2x %.3d\n", *p, *p);
         break;
 
-      case FIND:
-        if(*p == *dst) return i +1;
-        break;
-
-      case COUNT:
-        if(*p == *dst) ret++;
-        break;
-
       case MARK_ONE: {
         if(p == dst) MARKER_ON
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c",   *p);
+        else               printf("%.2x", *p);
         if(p == dst) MARKER_OFF
         break; }
 
       case MARK_ALL: {
         if(*p == *dst) MARKER_ON
-        if(opmode == CHAR)
-          printf("%c", *p);
-        else
-          printf("%.2x", *p);
+        if(opmode == CHAR) printf("%c",   *p);
+        else               printf("%.2x", *p);
         if(*p == *dst) MARKER_OFF
         break; }
 
-      default :
-        break;
+      default: break;
     }
     p++;
   }
 
   return ret;
+}
+
+
+// report indexes matrix
+void dump_matrix(ctx *p)
+{
+  // setup a bounder line
+  size_t max = p->wlen * 3;
+  char *t = malloc(max);
+  t[max] = '\0';
+  u8 i;
+  for(i = 0; i < max; i++) t[i] = '-';
+  printf("%s\n", t);
+
+  if(p->work == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); } // report current
+
+  max = 1;
+  u8 row = 0, *d = NULL;
+  while(row < max)
+  {
+    for(i = 0; i < p->wlen; i++) // d scan each charset
+    {
+      d = p->idx[i];
+      if(d[0] > max) max = d[0]; // update max if needed
+
+      if(row < d[0]) // we have an item
+      {
+        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_ON;
+
+        if(p->mode == CHAR) printf(" %c ",  d[row +1]);
+        else                printf("%.2x ", d[row +1]);
+
+        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_OFF;
+      }
+      else printf("   ");
+
+      if(p->out_m == DRY_RUN) p->word[i] = *(d + d[0]); // store last word possible
+    }
+    puts(""); row++;
+  }
+  printf("%s\n", t); // close with another bounder line
+  free(t); t = NULL;
+
+  if(p->work == DUMP) p->work = 0; // revert flag back to working
 }
 
 
@@ -234,20 +311,19 @@ s8 parse_file(ctx *ctx)
     - read one line at once
     - first check and store
   */
-  u8 *p  = NULL;
-  u8 idx = 0, len;
+  u8 *p = NULL;
+  u8  i = 0, len;
   while((read = getline(&line, &size, fp)) != -1
-  && (idx < max)
+  && (i < max)
   )
   {
-    len = 0;
     if(line[0] == '#') continue; // skip commented (#) lines
 
-    DPRINTF("%2d Retrieved line of length %zu: ", idx, read);
+    DPRINTF("%2d Retrieved line of length %zu: ", i, read);
     line[read -1] = '\0'; // trim newline unconditionally
-    DPRINTF("%s %zu-%zu\n", line, strlen(line), read);
-
     len = strlen(line);
+    DPRINTF("[%s] %u-%zu\n", line, len, read);
+
     if(!len) break; // stop read, on empty line
 
     switch(ctx->mode) /* check and store, on requested mode */
@@ -259,15 +335,14 @@ s8 parse_file(ctx *ctx)
       case HEX: {
         if(len %2 || len < 2) // check against lenght
         {
-          printf("[!] Line %u: lenght must be even! (is:%u)\n", idx +1, len);
-          scan((u8*)line, &len, CHAR, NULL); puts("");
+          printf("[!] Line %u: lenght must be even! (is:%u)\n%s\n", i +1, len, line);
           break;
         }
 
         s8 r = scan((u8*)line, &len, IS_HEX, NULL); // check for hex digits
         if(r != -1)
         {
-          printf("[!] Line %u: must contain hexadecimal digits only!\n", idx +1);
+          printf("[!] Line %u: must contain hexadecimal digits only for HEX mode!\n", i +1);
           scan((u8*)line, &len, MARK_ONE, (u8*)&line[(u8)r]); puts("");
           break;
         }
@@ -280,37 +355,39 @@ s8 parse_file(ctx *ctx)
 
     // alloc each new index type:
     size = sizeof(u8) * (len +1);
-    ctx->idx[idx] = malloc(size);
-    if(!ctx->idx[idx]) return -1;
+    ctx->idx[i] = malloc(size);
+    if(!ctx->idx[i]) return -1;
 
-    memcpy(&ctx->idx[idx][1], p, len); // store data
-    ctx->idx[idx][0] = len;            // store lenght
+    memcpy(&ctx->idx[i][1], p, len); // store data
+    ctx->idx[i][0] = len;            // store lenght
 
-    DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", idx, max, ctx->idx[idx], size, len);
-    //scan(&ctx->idx[idx][1], &ctx->idx[idx][0], HEXDUMP, NULL);          // report
+    DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", i, max, ctx->idx[i], size, len);
+    #ifdef DEBUG
+      scan(&ctx->idx[i][1], &ctx->idx[i][0], HEXDUMP, NULL);          // report
+    #endif
 
-    idx++;
+    i++;
   }
   free(line); line = NULL;
   fclose(fp); fp = NULL;
   free(p); p = NULL;
 
   /* Step 2 */
-  ctx->wlen = idx; // 1. setup tergets lenght
+  ctx->wlen = i; // 1. setup tergets lenght
 
-  if(1) /* realloc buffers */
+  if(1) // 2. realloc buffers
   {
-    size = sizeof(u8) * (idx +1);
+    size = sizeof(u8) * (i +1);
     if(!realloc(ctx->word, size)) return -1; // reuse ctx->word
-    *(ctx->word + idx) = '\0';
-    DPRINTF("realloc word\t@%p %zub: %u items\n", ctx->word, size, idx);
+    *(ctx->word + i) = '\0';
+    DPRINTF("realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
 
-    if(idx != max)
+    if(i != max)
     {
-      size = sizeof(u8*) * idx;
+      size = sizeof(u8*) * i;
       u8 **t = malloc(size);
       if(!t) return -1;
-      DPRINTF("realloc idx\t@%p %zub\n", t, size);
+      DPRINTF("realloc %d idx\t@%p %zub\n", i, t, size);
       memcpy(t, ctx->idx, size);
       free(ctx->idx);
       ctx->idx = t; // swap buffers, for indexes
@@ -320,12 +397,12 @@ s8 parse_file(ctx *ctx)
   if(1) /* Step 3 */
   {
     u32 estimated = 1;
-    for(u8 i = 0; i < idx; i++)
+    for(i = 0; i < ctx->wlen; i++)
     {
       p = ctx->idx[i]; // address each charset
 
       *(ctx->word + i) = p[1]; // 1. fill the initial word
-      DPRINTF("idx %2d/%.2d @%p:%d items\n", i, idx, p, p[0]);
+      DPRINTF("idx %2d/%.2d @%p:\t%d items\n", i, ctx->wlen, p, p[0]);
       u8 *d = NULL;
       s8 count = 0;
       for(u8 j = 1; j < p[0] +1; j++) // d scan each charset, from 1
@@ -336,7 +413,7 @@ s8 parse_file(ctx *ctx)
 
         if(count > 1) // 2. check if stored charset is unique
         {
-          printf("[!] Line %u: must be unique, found %u repetitions!\n", i, count);
+          printf("[!] Line %u: must be unique, found %u repetitions!\n", i +1, count);
           scan(&p[1], &p[0], MARK_ALL, d); puts("");
           return -1;
         }
@@ -344,9 +421,10 @@ s8 parse_file(ctx *ctx)
       estimated *= p[0]; // 3. count combinations
       d = NULL;
     }
-    DPRINTF("[I] Estimated %u combinations\n", estimated);
+
+    if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
   }
 
-  return idx;
+  return 0;
 }
 
