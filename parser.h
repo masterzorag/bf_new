@@ -5,7 +5,7 @@
   bf_new definitions
 */
 
-#define VERSION      "0.2.5-dev"
+#define VERSION          "0.2.5"
 
 #define MAX_ELEM        (256 /8)
 #define MIN_STRUCT_ALIGNMENT  8
