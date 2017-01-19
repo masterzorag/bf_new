@@ -57,6 +57,35 @@ void bin2stdout(ctx *p)
 }
 
 
+// actually we resume on parse_file()
+static size_t resume(ctx *p)
+{
+  u8 t[MAX_ELEM];
+
+  FILE *fp = fopen(FILESAVE, "r");
+  if(!fp) return 0;
+
+  fseek(fp, 0L, SEEK_END); // check file size
+  long r = ftell(fp);
+  rewind(fp);
+  if(r != p->wlen) return 0;
+
+  size_t n = fread(&t, sizeof(char), p->wlen, fp); // read
+  fclose(fp); fp = NULL;
+
+  if(n != p->wlen) return 0;
+
+  for(u8 i = 0; i < p->wlen; i++) // validate t against indexes
+  {
+    if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) return 0;
+  }
+
+  if(memcmp(t, p->word, p->wlen)) memcpy(p->word, &t, p->wlen); // resume
+
+  return n;
+}
+
+
 // actually we save on cleanup()
 static size_t save(ctx *p)
 {
@@ -429,6 +458,9 @@ s8 parse_file(ctx *ctx)
 
     if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
   }
+
+  /* Step 4. check if there is interrupted work to resume... */
+  if(resume(ctx)) DPRINTF("[I] filesave detected! Resuming\n");
 
   return 0;
 }
