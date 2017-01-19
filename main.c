@@ -97,11 +97,6 @@ int main(int argc, char **argv)
   }
 
   p = job.word;
-  switch(job.out_m) /* report the very first word composed, our starting point */
-  {
-    case BIN: bin2stdout(&job); break;
-    default:  scan(p, &job.wlen, PRINT, NULL); puts(""); break;
-  }
 
   if(job.out_m == DRY_RUN) // report data matrix
   {
@@ -122,14 +117,6 @@ int main(int argc, char **argv)
 
   while(1) // break it to exit(COMPLETED)
   {
-    //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
-    change(&job, &n);
-
-    if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
-    /*
-      compute which one have to change and eventually continue
-      something like n = find(word);
-    */
     if(1) // main output
     {
       #ifdef COUNT
@@ -159,13 +146,21 @@ int main(int argc, char **argv)
           default: break;
         }
 
-        if(job.work == DUMP) dump_matrix(&job); // -USR1 output
+        if(job.work == DUMP) dump_matrix(&job); // -USR1 output trigger
         else if(job.work == DONE) break;
 
       }
     } // end main output
 
+    change(&job, &n);
+
+    if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
+    /*
+      compute which one have to change and eventually continue
+      something like n = find(word);
+    */
     n = job.wlen -1; // reset n to rightmost one
+
     c++;             // and keep count
   }
 
