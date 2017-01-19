@@ -241,15 +241,17 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 // report indexes matrix
 void dump_matrix(ctx *p)
 {
+  if(p->work == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); } // report current
+
   // setup a bounder line
-  size_t max = p->wlen * 3;
+  size_t max = sizeof(u8) * p->wlen *3;
   char *t = malloc(max);
   t[max] = '\0';
   u8 i;
   for(i = 0; i < max; i++) t[i] = '-';
   printf("%s\n", t);
 
-  if(p->work == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); } // report current
+  u8 *t2 = malloc(sizeof(u8) * *p->word); // used just on DRY_RUN, stores last one
 
   max = 1;
   u8 row = 0, *d = NULL;
@@ -271,12 +273,15 @@ void dump_matrix(ctx *p)
       }
       else printf("   ");
 
-      if(p->out_m == DRY_RUN) p->word[i] = *(d + d[0]); // store last word possible
+      if(p->out_m == DRY_RUN) t2[i] = *(d + d[0]); // compose last possible word
     }
     puts(""); row++;
   }
   printf("%s\n", t); // close with another bounder line
-  free(t); t = NULL;
+  free(t), t = NULL;
+
+  if(p->out_m == DRY_RUN) memcpy(p->word, t2, sizeof(u8) * p->wlen); // save max possible
+  free(t2), t2 = NULL;
 
   if(p->work == DUMP) p->work = 0; // revert flag back to working
 }
