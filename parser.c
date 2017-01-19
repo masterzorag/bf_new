@@ -460,7 +460,7 @@ s8 parse_file(ctx *ctx)
   }
 
   /* Step 4. check if there is interrupted work to resume... */
-  if(resume(ctx)) DPRINTF("[I] filesave detected! Resuming\n");
+  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated\n");
 
   return 0;
 }
