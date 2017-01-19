@@ -6,6 +6,7 @@
 */
 
 #define VERSION      "0.2.6-dev"
+#define FILESAVE      ".bf.save"
 
 #define MAX_ELEM        (256 /8)
 #define MIN_STRUCT_ALIGNMENT  8

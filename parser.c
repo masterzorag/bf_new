@@ -60,7 +60,7 @@ void bin2stdout(ctx *p)
 // actually we save on cleanup()
 static size_t save(ctx *p)
 {
-  FILE *fp = fopen(".bf.save", "w");
+  FILE *fp = fopen(FILESAVE, "w");
   if(!fp) return 0;
 
   size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
