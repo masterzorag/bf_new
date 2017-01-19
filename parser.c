@@ -145,6 +145,7 @@ static void help()
 /*
   unset LANG LC_ALL; LC_CTYPE=en_US.iso88591 export LC_CTYPE
 */
+/* Locale initiator, -1 ok, 0 on error */
 static s8 setup_locale(void)
 {
   char *res;
@@ -166,6 +167,7 @@ static s8 setup_locale(void)
 }
 
 
+/* Option parser, 0 ok, -1 on error */
 s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
   if(argc == 1){ help(); return -1;}
@@ -268,10 +270,10 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 }
 
 
-// report indexes matrix
+/* Marked matrix dumper, triggered by USR1 signal */
 void dump_matrix(ctx *p)
 {
-  if(p->work == DUMP) { scan(p->word, &p->wlen, PRINT, NULL); puts(""); } // report current
+  scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
 
   // setup a bounder line
   size_t max = sizeof(u8) * p->wlen *3;
@@ -294,12 +296,12 @@ void dump_matrix(ctx *p)
 
       if(row < d[0]) // we have an item
       {
-        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_ON;
+        if(d[row +1] == p->word[i]) MARKER_ON;
 
         if(p->mode == CHAR) printf(" %c ",  d[row +1]);
         else                printf("%.2x ", d[row +1]);
 
-        if((p->work == DUMP) && (d[row +1] == p->word[i])) MARKER_OFF;
+        if(d[row +1] == p->word[i]) MARKER_OFF;
       }
       else printf("   ");
 

@@ -100,7 +100,6 @@ int main(int argc, char **argv)
 
   if(job.out_m == DRY_RUN) // report data matrix
   {
-    job.work = DUMP; // force a marked matrix
     dump_matrix(&job);
     // in this case word is turned into the last one, report again
     scan(p, &job.wlen, PRINT, NULL); puts("");
