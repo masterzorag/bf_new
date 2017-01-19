@@ -123,16 +123,16 @@ static s8 setup_locale(void)
   res = setlocale (LC_ALL, "");   // set user default
   res = setlocale (LC_ALL, NULL); // query result
   DPRINTF("LC_ALL: %s\n", res);
-  if(!res) { printf("error"); return -1; }
+  if(!res) { printf("error"); return 0; }
 
   res = setlocale (LC_CTYPE, "en_US.iso88591"); // try to set codepage
-  if(!res) { printf("[E] error setting locale!"); return -1; }
+  if(!res) { printf("[E] error setting locale!"); return 0; }
 
   res = setlocale (LC_CTYPE, NULL); // to check, now query
   DPRINTF("LC_CTYPE: %s\n", res);
-  if(!res) { printf("[E] error setting locale!"); return -1; }
+  if(!res) { printf("[E] error setting locale!"); return 0; }
 
-  return 0;
+  return -1;
 }
 
 
@@ -140,7 +140,7 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
 {
   if(argc == 1){ help(); return -1;}
 
-  if(setup_locale()) return -1;
+  if(!setup_locale()) return -1;
 
   int idx, c, flag_err = 0;
   opterr = 0;
