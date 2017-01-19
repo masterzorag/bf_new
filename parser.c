@@ -73,15 +73,16 @@ static size_t resume(ctx *p)
   size_t n = fread(&t, sizeof(char), p->wlen, fp); // read
   fclose(fp); fp = NULL;
 
-  if(n != p->wlen) return 0;
+  if(n != p->wlen) return 0; // check if sizes matches
+
+  if(!memcmp(t, p->word, p->wlen)) return 0; // check content
 
   for(u8 i = 0; i < p->wlen; i++) // validate t against indexes
   {
     if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) return 0;
   }
 
-  if(memcmp(t, p->word, p->wlen)) memcpy(p->word, &t, p->wlen); // resume
-
+  memcpy(p->word, &t, p->wlen); // resume from saved
   return n;
 }
 
