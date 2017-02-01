@@ -128,7 +128,9 @@ static void help()
   \n\
   -c  pass a valid config file\n\
   -l  set word lenght (default = max possible)\n\
-  -x  use HEX mode    (default = CHAR)\n\n\
+  -n  generate just n words\n\
+  -x  use HEX mode    (default = CHAR)\n\
+  \n\
   Output:\n\
   -b  binary output\n\
   -w  print out wordlist\n\
@@ -178,20 +180,32 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
   opterr = 0;
   opmode = CHAR;
 
-  while((c = getopt(argc, argv, "c:l:xbwqh")) != -1)
+  while((c = getopt(argc, argv, "c:l:n:xbwqh")) != -1)
     switch(c)
     {
+      case 'h': help(); return -1;
       case 'c': ctx->word = (u8*)strdup(optarg); break;
-      case 'l': ctx->wlen = atoi(optarg); break;
       case 'x': ctx->mode = opmode = HEX; break;
 
+      case 'l':
+      case 'n':
+      {
+        signed int t = atoi(optarg);
+        if(t < 1) { optopt = c; goto ERR; }
+
+        if(c == 'l') ctx->wlen = t;
+        else         ctx->numw = t;
+        break;
+      }
       case 'b': flag_err++, ctx->out_m = BIN;      break;
       case 'w': flag_err++, ctx->out_m = WORDLIST; break;
       case 'q': flag_err++, ctx->out_m = QUIET;    break;
 
-      case 'h': help(); return -1;
       case '?':
-        if(optopt == 'c' || optopt == 'l')
+ERR:
+        if(optopt == 'c'
+        || optopt == 'l'
+        || optopt == 'n')
           fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         else if(isprint(optopt))
           fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -208,7 +222,8 @@ s8 parse_opt(int argc, char **argv, ctx *ctx)
     printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
   }
 
-  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u\n", ctx->wlen, ctx->mode, ctx->word, ctx->out_m);
+  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u, n = %d\n",
+    ctx->wlen, ctx->mode, ctx->word, ctx->out_m, ctx->numw);
 
   for(idx = optind; idx < argc; idx++)
     printf("Non-option argument %s\n", argv[idx]);

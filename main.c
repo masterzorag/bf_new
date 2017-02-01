@@ -57,8 +57,10 @@ int main(int argc, char **argv)
 
   /* working context init */
   ctx job;
+
   job.mode = CHAR;
   job.idx  = NULL;
+  job.numw = 0;
   job.wlen = 0;
   job.word = malloc(MAX_ELEM);
   if(!job.word) exit(EXIT_FAILURE);
@@ -100,6 +102,8 @@ int main(int argc, char **argv)
 
   if(job.out_m == DRY_RUN) // report data matrix
   {
+    if(job.numw) printf("[I] Requested %u words!\n", job.numw);
+
     dump_matrix(&job);
     // in this case word is turned into the last one, report again
     scan(p, &job.wlen, PRINT, NULL); puts("");
@@ -151,6 +155,8 @@ int main(int argc, char **argv)
 
       }
     } // end main output
+
+    if(job.numw && job.numw == c) { job.work = DONE; break; }
 
     change(&job, &n);
 
