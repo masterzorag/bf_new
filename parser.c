@@ -98,8 +98,8 @@ static size_t save(ctx *p)
   FILE *fp = fopen(FILESAVE, "w");
   if(!fp) return 0;
 
-  size_t n = fwrite(p->word, sizeof(char), p->wlen, fp); // dump
-  fclose(fp); fp = NULL;
+  size_t n = fwrite(p->word, sizeof(unsigned char), p->wlen, fp); // dump
+  fclose(fp), fp = NULL;
 
   DPRINTF("written %zub, @%p\n", n, p->word);
   return n;
@@ -227,10 +227,8 @@ ERR:
         abort();
     }
 
-  if(flag_err > 1) // accept just one output flag!
-  {
-    printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1;
-  }
+  /* accept just one output flag! */
+  if(flag_err > 1) { printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1; }
 
   DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u, n = %d\n",
     ctx->wlen, ctx->mode, ctx->word, ctx->out_m, ctx->numw);
@@ -301,7 +299,7 @@ void dump_matrix(ctx *p)
   scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
 
   // setup a bounder line
-  size_t max = sizeof(u8) * p->wlen *3;
+  size_t max = sizeof(char) * p->wlen *3;
   char *t = malloc(max);
   if(!t) puts("error");
   //t[max] = '\0';

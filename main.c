@@ -96,15 +96,14 @@ int main(int argc, char **argv)
     #endif
   }
 
-  p = job.word;
-
-  if(job.out_m == DRY_RUN) // report data matrix
+  /* report data matrix */
+  if(job.out_m == DRY_RUN)
   {
     if(job.numw) printf("[I] Requested %u words!\n", job.numw);
 
     dump_matrix(&job);
-    // in this case word is turned into the last one, report again
-    scan(p, &job.wlen, PRINT, NULL); puts("");
+    // in this case word is moved into the last one, report again
+    scan(job.word, &job.wlen, PRINT, NULL); puts("");
 
     cleanup(&job); exit(0);
   }
@@ -114,6 +113,7 @@ int main(int argc, char **argv)
   setup_signals(&job);
 
   /* main process here */
+  p = job.word;
   s8  n = job.wlen -1;
   u32 c = 1;
 
