@@ -59,12 +59,10 @@ int main(int argc, char **argv)
   ctx job;
 
   job.mode = CHAR;
+  job.word = NULL;
   job.idx  = NULL;
   job.numw = 0;
   job.wlen = 0;
-  job.word = malloc(MAX_ELEM);
-  if(!job.word) exit(EXIT_FAILURE);
-
   job.out_m = DRY_RUN; // default
 
   job.work = parse_opt(argc, argv, &job);

@@ -58,32 +58,37 @@ void bin2stdout(ctx *p)
 
 
 // actually we resume on parse_file()
-static size_t resume(ctx *p)
+static u8 resume(ctx *p)
 {
-  u8 t[MAX_ELEM];
+  u8 res = 0;
+  u8 *t = calloc(p->wlen, sizeof(u8));
 
   FILE *fp = fopen(FILESAVE, "r");
-  if(!fp) return 0;
+  if(!t || !fp) return 0;
 
-  fseek(fp, 0L, SEEK_END); // check file size
+  fseek(fp, 0L, SEEK_END); // check on file size
   long r = ftell(fp);
   rewind(fp);
-  if(r != p->wlen) return 0;
+  if(r != p->wlen) goto END;
 
-  size_t n = fread(&t, sizeof(char), p->wlen, fp); // read
-  fclose(fp); fp = NULL;
+  size_t n = fread(t, sizeof(char), (size_t)p->wlen, fp); // read
 
-  if(n != p->wlen) return 0; // check if sizes matches
+  if(n != p->wlen) goto END; // check on readed size
 
-  if(!memcmp(t, p->word, p->wlen)) return 0; // check content
+  if(!memcmp(t, p->word, (size_t)p->wlen)) goto END; // check on readed content
 
   for(u8 i = 0; i < p->wlen; i++) // validate t against indexes
   {
-    if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) return 0;
+    if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) goto END;
   }
 
-  memcpy(p->word, &t, p->wlen); // resume from saved
-  return n;
+  memcpy(p->word, t, (size_t)p->wlen); // passed, resume from saved
+  res = n;
+
+END:
+  fclose(fp), fp = NULL;
+  free(t), t = NULL;
+  return res;
 }
 
 
@@ -104,19 +109,24 @@ static size_t save(ctx *p)
 // wrapper to release allocated ctx memory
 void cleanup(ctx *p)
 {
-  /* save to resume on next run
+  /* save last generated, to resume on next run
      note: in a completed run, word is turned into the first one by change()! */
   if(p->work == DONE) save(p);
 
   /* clean free()s */
-  if(p->word) free(p->word);
+  if(p->word) free(p->word), p->word = NULL;
+
   if(p->idx)
   {
+    DPRINTF("idx @%p\n", p->idx);
     for(u8 i = 0; i < p->wlen; i++)
-      if(p->idx[i]) free(p->idx[i]);
-
-    if(p->idx) free(p->idx);
+    {
+      DPRINTF("%.2d-@%p -> @%p %hhu\n", i, &p->idx[i], p->idx[i], *p->idx[i]);
+      if(p->idx[i]) free(p->idx[i]), p->idx[i] = NULL;
+    }
   }
+  DPRINTF("idx @%p %p\n", p->idx, *p->idx);
+  if(p->idx) free(p->idx), p->idx = NULL;
 }
 
 
@@ -293,18 +303,21 @@ void dump_matrix(ctx *p)
   // setup a bounder line
   size_t max = sizeof(u8) * p->wlen *3;
   char *t = malloc(max);
-  t[max] = '\0';
-  u8 i;
-  for(i = 0; i < max; i++) t[i] = '-';
-  printf("%s\n", t);
+  if(!t) puts("error");
+  //t[max] = '\0';
+  memset(t, '-', max);
+  puts(t);
 
-  u8 *t2 = malloc(sizeof(u8) * *p->word); // used just on DRY_RUN, stores last one
+  u8 *t2 = malloc(sizeof(u8) * p->wlen); // used just on DRY_RUN, stores last one
+  if(!t2) puts("error");
+
 
   max = 1;
   u8 row = 0, *d = NULL;
   while(row < max)
   {
-    for(i = 0; i < p->wlen; i++) // d scan each charset
+    //DPRINTF("row %d, max %zu\n", row, max);
+    for(u8 i = 0; i < p->wlen; i++) // d scan each charset
     {
       d = p->idx[i];
       if(d[0] > max) max = d[0]; // update max if needed
@@ -320,15 +333,19 @@ void dump_matrix(ctx *p)
       }
       else printf("   ");
 
-      if(p->out_m == DRY_RUN) t2[i] = *(d + d[0]); // compose last possible word
+      if(p->out_m == DRY_RUN) t2[i] = *(d + d[0]); // compose last possible
     }
     puts(""); row++;
   }
-  printf("%s\n", t); // close with another bounder line
+  //printf("%s\n", t); // close with another bounder line
+  puts(t);
   free(t), t = NULL;
 
-  if(p->out_m == DRY_RUN) memcpy(p->word, t2, sizeof(u8) * p->wlen); // save max possible
-  free(t2), t2 = NULL;
+  if(p->out_m == DRY_RUN) // save max possible
+  {
+    DPRINTF("%p %p %p\n", p, p->word, &p->word);
+    free(p->word), p->word = t2;
+  }
 
   if(p->work == DUMP) p->work = 0; // revert flag back to working
 }
@@ -411,6 +428,7 @@ s8 parse_file(ctx *ctx)
     if(!ctx->idx[i]) return -1;
 
     memcpy(&ctx->idx[i][1], p, len); // store data
+    free(p), p = NULL;
     ctx->idx[i][0] = len;            // store lenght
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", i, max, ctx->idx[i], size, len);
@@ -420,9 +438,9 @@ s8 parse_file(ctx *ctx)
 
     i++;
   }
-  free(line); line = NULL;
-  fclose(fp); fp = NULL;
-  free(p); p = NULL;
+  free(line), line = NULL;
+  fclose(fp), fp = NULL;
+  free(p), p = NULL;
 
   /* Step 2 */
   ctx->wlen = i; // 1. setup tergets lenght
@@ -430,8 +448,11 @@ s8 parse_file(ctx *ctx)
   if(1) // 2. realloc buffers
   {
     size = sizeof(u8) * (i +1);
-    if(!realloc(ctx->word, size)) return -1; // reuse ctx->word
-    *(ctx->word + i) = '\0';
+    u8 *t1 = malloc(size);
+    if(!t1) return -1;
+
+    memcpy(t1, ctx->word, size);
+    free(ctx->word), ctx->word = t1; // swap buffers
     DPRINTF("realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
 
     if(i != max)
@@ -439,10 +460,10 @@ s8 parse_file(ctx *ctx)
       size = sizeof(u8*) * i;
       u8 **t = malloc(size);
       if(!t) return -1;
-      DPRINTF("realloc %d idx\t@%p %zub\n", i, t, size);
+
       memcpy(t, ctx->idx, size);
-      free(ctx->idx);
-      ctx->idx = t; // swap buffers, for indexes
+      free(ctx->idx), ctx->idx = t; // swap buffers, for indexes
+      DPRINTF("realloc %d idx\t@%p %zub\n", i, ctx->idx, size);
     }
   }
 
