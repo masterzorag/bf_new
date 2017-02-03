@@ -98,6 +98,7 @@ static size_t save(ctx *p)
   FILE *fp = fopen(FILESAVE, "w");
   if(!fp) return 0;
 
+  DPRINTF("Saving\n");
   size_t n = fwrite(p->word, sizeof(unsigned char), p->wlen, fp); // dump
   fclose(fp), fp = NULL;
 
@@ -351,36 +352,31 @@ void dump_matrix(ctx *p)
 
 s8 parse_file(ctx *ctx)
 {
-  FILE *fp;
-  char *line  = NULL;
-  size_t size = 0;
-  ssize_t read;
-
-  fp = fopen((char *)ctx->word, "r");
+  FILE *fp = fopen((char *)ctx->word, "r");
   DPRINTF("fopen(%s) @%p\n", ctx->word, fp);
   if(!fp)
   {
     printf("Can't open file %s\n", ctx->word); return -1;
   }
 
-  u8 max = MAX_ELEM;
+  u8 max = MAX_ELEM; // setup on target length
   if(ctx->wlen)
   {
     max = ctx->wlen; DPRINTF("reading max %d lines\n", max);
   }
 
-  size = sizeof(u8*) * max;
-  ctx->idx = malloc(size); // new index data type
+  // alloc for data indexes
+  size_t size = sizeof(u8*) * max;
+  ctx->idx = malloc(size);
   if(!ctx->idx) return -1;
-  DPRINTF("malloc @%p %zub for %u idx\n", ctx->idx, size, max);
+  DPRINTF("malloc @%p %zub for max %u idx\n", ctx->idx, size, max);
 
-  /* Step 1
-    - read one line at once
-    - first check and store
-  */
-  u8 *p = NULL;
-  u8  i = 0, len;
-  while((read = getline(&line, &size, fp)) != -1
+  /* Step 1: first check and store */
+  u8 i = 0, len, *p = NULL;
+  char *line = NULL;
+  ssize_t read;
+
+  while((read = getline(&line, &size, fp)) != -1 // read one line at once
   && (i < max)
   )
   {
@@ -400,7 +396,7 @@ s8 parse_file(ctx *ctx)
         break;
 
       case HEX: {
-        if(len %2 || len < 2) // check against lenght
+        if(len %2 || len < 2) // minimal check on lenght
         {
           printf("[!] Line %u: lenght must be even! (is:%u)\n%s\n", i +1, len, line);
           break;
@@ -420,7 +416,7 @@ s8 parse_file(ctx *ctx)
     }
     if(!p) return(-1);
 
-    // alloc each new index type:
+    // alloc for single index
     size = sizeof(u8) * (len +1);
     ctx->idx[i] = malloc(size);
     if(!ctx->idx[i]) return -1;
@@ -431,7 +427,7 @@ s8 parse_file(ctx *ctx)
 
     DPRINTF("idx %2d/%.2d @%p %zub: %d items\n", i, max, ctx->idx[i], size, len);
     #ifdef DEBUG
-      scan(&ctx->idx[i][1], &ctx->idx[i][0], HEXDUMP, NULL);          // report
+      scan(&ctx->idx[i][1], &ctx->idx[i][0], HEXDUMP, NULL); // report
     #endif
 
     i++;
@@ -460,7 +456,7 @@ s8 parse_file(ctx *ctx)
       if(!t) return -1;
 
       memcpy(t, ctx->idx, size);
-      free(ctx->idx), ctx->idx = t; // swap buffers, for indexes
+      free(ctx->idx), ctx->idx = t; // swap buffers, for data indexes
       DPRINTF("realloc %d idx\t@%p %zub\n", i, ctx->idx, size);
     }
   }
@@ -499,7 +495,7 @@ s8 parse_file(ctx *ctx)
   }
 
   /* Step 4. check if there is interrupted work to resume... */
-  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated\n");
+  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated from: %s\n", FILESAVE);
 
   return 0;
 }
