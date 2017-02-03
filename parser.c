@@ -446,11 +446,11 @@ s8 parse_file(ctx *ctx)
   if(1) // 2. realloc buffers
   {
     size = sizeof(u8) * (i +1);
-    u8 *t1 = malloc(size);
-    if(!t1) return -1;
+    p = malloc(size);
+    if(!p) return -1;
 
-    memcpy(t1, ctx->word, size);
-    free(ctx->word), ctx->word = t1; // swap buffers
+    memcpy(p, ctx->word, size);
+    free(ctx->word), ctx->word = p; // swap buffers, for word
     DPRINTF("realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
 
     if(i != max)
