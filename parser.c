@@ -494,6 +494,8 @@ s8 parse_file(ctx *ctx)
     }
 
     if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
+
+    if(estimated < ctx->numw) { printf("[E] Requested %u combinations can't be reached!\n", ctx->numw); return -1; }
   }
 
   /* Step 4. check if there is interrupted work to resume... */
