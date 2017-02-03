@@ -5,7 +5,7 @@
   bf_new definitions
 */
 
-#define VERSION          "0.2.6"
+#define VERSION      "0.2.7-dev"
 #define FILESAVE      ".bf.save"
 
 #define MAX_ELEM        (256 /8)
