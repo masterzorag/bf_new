@@ -1,0 +1,28 @@
+# Sample configfile, using HEX mode
+000102
+0a0b
+c0d0
+0e0f
+0550
+ffaa
+1133557799
+0022446688
+0102
+
+
+
+$ ./bf -c test/test_6.hex -x
+Will setups the following testcase:
+
+[I] Estimated 4800 combinations
+[I] config passed, report data matrix:
+
+000ac00e05ff110001
+---------------------------
+00 0a c0 0e 05 ff 11 00 01 
+01 0b d0 0f 50 aa 33 22 02 
+02                55 44    
+                  77 66    
+                  99 88    
+---------------------------
+020bd00f50aa998802
