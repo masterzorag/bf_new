@@ -7,7 +7,7 @@
 
 static ctx *p = NULL;
 
-static void dump_v1()
+/*static void dump_v1()
 {
   u8 *d = NULL;
   for(u8 i = 0; i < p->wlen; i++) // d scan each charset
@@ -16,7 +16,7 @@ static void dump_v1()
     scan(&d[1], &d[0], MARK_ALL, &p->word[i]);
     puts("");
   }
-}
+}*/
 
 
 static void sig_handler(int signo) // use p to access data

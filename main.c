@@ -57,12 +57,12 @@ int main(int argc, char **argv)
 
   /* working context init */
   ctx job;
-  job.mode = CHAR;
-  job.idx  = NULL;
-  job.wlen = 0;
-  job.word = malloc(MAX_ELEM);
-  if(!job.word) exit(EXIT_FAILURE);
 
+  job.mode = CHAR;
+  job.word = NULL;
+  job.idx  = NULL;
+  job.numw = 0;
+  job.wlen = 0;
   job.out_m = DRY_RUN; // default
 
   job.work = parse_opt(argc, argv, &job);
@@ -96,33 +96,61 @@ int main(int argc, char **argv)
     #endif
   }
 
-  p = job.word;
-  switch(job.out_m) /* report the very first word composed, our starting point */
+  /* report data matrix */
+  if(job.out_m == DRY_RUN)
   {
-    case BIN: bin2stdout(&job); break;
-    default:  scan(p, &job.wlen, PRINT, NULL); puts(""); break;
-  }
+    if(job.numw) printf("[I] Requested %u words!\n", job.numw);
 
-  if(job.out_m == DRY_RUN) // report data matrix
-  {
     dump_matrix(&job);
-    // in this case word is turned into the last one, report again
-    scan(p, &job.wlen, PRINT, NULL); puts("");
+    // in this case word is moved into the last one!
+    scan(job.word, &job.wlen, PRINT, NULL); puts(""); // report last possible
 
     cleanup(&job); exit(0);
   }
-  //else getchar(); // ready, user pause
 
   /* catch signals */
   setup_signals(&job);
 
-  /* main process here */
+  /* main process starts here */
+  p = job.word;
   s8  n = job.wlen -1;
   u32 c = 1;
 
-  while(1) // break it to exit(COMPLETED)
+  while(1) // break it to exit(DONE)
   {
-    //if(memcmp(job.word, "acqua", job.wlen) == 0) break;
+    #ifdef COUNT
+    if(c %COUNT == 0) // output only every COUNT attempt
+    #endif
+    {
+      switch(job.out_m)
+      {
+        case BIN: bin2stdout(&job); break;                /* bin to STDOUT,   mode based */
+        default:  scan(p, &job.wlen, PRINT, NULL); break; /* standard output, mode based */
+      }
+
+      #ifdef COUNT // print timing info
+      {
+        STOP;
+        PRINTTIME;
+        printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
+        START;
+      }
+      #endif
+
+      switch(job.out_m)
+      {
+        case WORDLIST: printf("\n"); break; /* one-per-line output */
+        case QUIET:    printf("\r"); break; /* on-same-line output */
+        default: break;
+      }
+
+      if(job.work == DUMP) dump_matrix(&job); // -USR1 output trigger
+
+      if(job.work == DONE) break;
+    }
+
+    if(job.numw && job.numw == c) { job.work = DONE; break; }
+
     change(&job, &n);
 
     if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
@@ -130,42 +158,8 @@ int main(int argc, char **argv)
       compute which one have to change and eventually continue
       something like n = find(word);
     */
-    if(1) // main output
-    {
-      #ifdef COUNT
-      if(c %COUNT == 0) // output only every COUNT attempt
-      #endif
-      {
-        switch(job.out_m)
-        {
-//        case MARKED: scan(p, &job.wlen, MARK_ONE, &p[(u8)n]); break;
-          case BIN: bin2stdout(&job); break; /* bin to STDOUT, mode based */
-          default:  scan(p, &job.wlen, PRINT, NULL); break; /* standard output, mode based */
-        }
-
-        #ifdef COUNT // print timing info
-        {
-          STOP;
-          PRINTTIME;
-          printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
-          START;
-        }
-        #endif
-
-        switch(job.out_m)
-        {
-          case WORDLIST: printf("\n"); break; /* one-per-line output */
-          case QUIET:    printf("\r"); break; /* on-the-same-line output */
-          default: break;
-        }
-
-        if(job.work == DUMP) dump_matrix(&job); // -USR1 output
-        else if(job.work == DONE) break;
-
-      }
-    } // end main output
-
     n = job.wlen -1; // reset n to rightmost one
+
     c++;             // and keep count
   }
 
