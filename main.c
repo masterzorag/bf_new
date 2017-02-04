@@ -117,6 +117,7 @@ int main(int argc, char **argv)
   while(1) // break it to exit(DONE)
   {
     #ifdef COUNT
+    if(c == 1) START;
     if(c %COUNT == 0) // output only every COUNT attempt
     #endif
     {
