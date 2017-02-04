@@ -103,8 +103,6 @@ int main(int argc, char **argv)
 
     dump_matrix(&job);
     // in this case word is moved into the last one!
-    scan(job.word, &job.wlen, PRINT, NULL); puts(""); // report last possible
-
     cleanup(&job); exit(0);
   }
 

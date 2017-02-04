@@ -304,15 +304,13 @@ void dump_matrix(ctx *p)
 
   // setup a bounder line
   size_t max = sizeof(char) * p->wlen *3;
-  char *t = malloc(max);
-  if(!t) puts("error");
-  //t[max] = '\0';
+  char *t = calloc(max +1,  sizeof(char)); // bounder line
+  u8  *t2 = calloc(p->wlen, sizeof(u8));   // to store last one
+
+  if(!t || !t2) fprintf(stderr, "error");
+
   memset(t, '-', max);
-  puts(t);
-
-  u8 *t2 = malloc(sizeof(u8) * p->wlen); // used just on DRY_RUN, stores last one
-  if(!t2) puts("error");
-
+  fprintf(stderr, "%s\n", t);
 
   max = 1;
   u8 row = 0, *d = NULL;
