@@ -122,12 +122,15 @@ void cleanup(ctx *p)
     DPRINTF("idx @%p\n", p->idx);
     for(u8 i = 0; i < p->wlen; i++)
     {
-      DPRINTF("%.2d-@%p -> @%p %hhu\n", i, &p->idx[i], p->idx[i], *p->idx[i]);
-      if(p->idx[i]) free(p->idx[i]), p->idx[i] = NULL;
+      if(p->idx[i])
+      {
+        DPRINTF("%.2d-@%p -> @%p %hhu\n", i, &p->idx[i], p->idx[i], *p->idx[i]);
+        free(p->idx[i]), p->idx[i] = NULL;
+      }
     }
+    DPRINTF("idx @%p %p\n", p->idx, *p->idx);
+    free(p->idx), p->idx = NULL;
   }
-  DPRINTF("idx @%p %p\n", p->idx, *p->idx);
-  if(p->idx) free(p->idx), p->idx = NULL;
 }
 
 
