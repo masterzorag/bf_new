@@ -17,8 +17,8 @@
   #define DPRINTF(...)
 #endif
 
-#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
-#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+#define MARKER_ON   fprintf(stderr, "%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
+#define MARKER_OFF  fprintf(stderr, "%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
 
 typedef signed   char s8;
 typedef unsigned char u8;

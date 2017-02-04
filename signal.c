@@ -39,9 +39,9 @@ void setup_signals(ctx *ctx)
 {
   p = ctx; // address p
 
-  if(ctx->out_m == QUIET) printf("send 'kill -USR1 %d' from another terminal to dump\n", getpid());
+  if(ctx->out_m == QUIET) fprintf(stderr, "send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
-  if(signal(SIGUSR1, sig_handler) == SIG_ERR) printf("\ncan't catch SIGUSR1\n");
+  if(signal(SIGUSR1, sig_handler) == SIG_ERR) fprintf(stderr, "\ncan't catch SIGUSR1\n");
 
-  if(signal(SIGINT,  sig_handler) == SIG_ERR) printf("\ncan't catch SIGINT\n");
+  if(signal(SIGINT,  sig_handler) == SIG_ERR) fprintf(stderr, "\ncan't catch SIGINT\n");
 }

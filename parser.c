@@ -52,7 +52,7 @@ void bin2stdout(ctx *p)
 
   if(n != p->wlen) // trap exceptions on interruption
   {
-    printf("data interrupted"); getchar();
+    fprintf(stderr, "data interrupted"); getchar();
   }
 }
 
@@ -98,11 +98,10 @@ static size_t save(ctx *p)
   FILE *fp = fopen(FILESAVE, "w");
   if(!fp) return 0;
 
-  DPRINTF("Saving\n");
   size_t n = fwrite(p->word, sizeof(unsigned char), p->wlen, fp); // dump
   fclose(fp), fp = NULL;
 
-  DPRINTF("written %zub, @%p\n", n, p->word);
+  DPRINTF("Written %zub from %p to '%s'\n", n, p->word, FILESAVE);
   return n;
 }
 
@@ -119,7 +118,7 @@ void cleanup(ctx *p)
 
   if(p->idx)
   {
-    DPRINTF("idx @%p\n", p->idx);
+    DPRINTF("**idx @%p\n", p->idx);
     for(u8 i = 0; i < p->wlen; i++)
     {
       if(p->idx[i])
@@ -128,7 +127,7 @@ void cleanup(ctx *p)
         free(p->idx[i]), p->idx[i] = NULL;
       }
     }
-    DPRINTF("idx @%p %p\n", p->idx, *p->idx);
+    DPRINTF("**idx @%p %p\n", p->idx, *p->idx);
     free(p->idx), p->idx = NULL;
   }
 }
@@ -232,13 +231,13 @@ ERR:
     }
 
   /* accept just one output flag! */
-  if(flag_err > 1) { printf("[E] flags -b, -w, -q, -v are mutually exclusive\n"); return -1; }
+  if(flag_err > 1) { fprintf(stderr, "[E] flags -b, -w, -q, are mutually exclusive\n"); return -1; }
 
-  DPRINTF("wlen = %d, xflag = %d, filename = %s, bin = %u, n = %d\n",
+  DPRINTF("wlen = %d, mode = %d, filename = %s, bin = %u, n = %d\n",
     ctx->wlen, ctx->mode, ctx->word, ctx->out_m, ctx->numw);
 
   for(idx = optind; idx < argc; idx++)
-    printf("Non-option argument %s\n", argv[idx]);
+    fprintf(stderr, "Non-option argument %s\n", argv[idx]);
 
   return 0;
 }
@@ -297,7 +296,8 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 }
 
 
-/* Marked matrix dumper, triggered by USR1 signal */
+/* Marked matrix dumper
+   used just on DRY_RUN, or triggered by -USR1 signal */
 void dump_matrix(ctx *p)
 {
   scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
@@ -318,7 +318,7 @@ void dump_matrix(ctx *p)
   u8 row = 0, *d = NULL;
   while(row < max)
   {
-    //DPRINTF("row %d, max %zu\n", row, max);
+  //DPRINTF("row %d, max %zu\n", row, max);
     for(u8 i = 0; i < p->wlen; i++) // d scan each charset
     {
       d = p->idx[i];
@@ -328,26 +328,28 @@ void dump_matrix(ctx *p)
       {
         if(d[row +1] == p->word[i]) MARKER_ON;
 
-        if(p->mode == CHAR) printf(" %c ",  d[row +1]);
-        else                printf("%.2x ", d[row +1]);
+        if(p->mode == CHAR) fprintf(stderr, " %c ",  d[row +1]);
+        else                fprintf(stderr, "%.2x ", d[row +1]);
 
         if(d[row +1] == p->word[i]) MARKER_OFF;
       }
-      else printf("   ");
+      else fprintf(stderr, "   ");
 
       if(p->out_m == DRY_RUN) t2[i] = *(d + d[0]); // compose last possible
     }
-    puts(""); row++;
+    fprintf(stderr, "\n"); row++;
   }
-  //printf("%s\n", t); // close with another bounder line
-  puts(t);
+  fprintf(stderr, "%s\n", t); // close with another bounder line
   free(t), t = NULL;
 
-  if(p->out_m == DRY_RUN) // save max possible
+  if(p->out_m == DRY_RUN) // report max possible
   {
-    DPRINTF("%p %p %p\n", p, p->word, &p->word);
+  //DPRINTF("%p %p %p\n", p, p->word, &p->word);
     free(p->word), p->word = t2;
+    scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report last
   }
+  else free(t2), t2 = NULL;
+
 
   if(p->work == DUMP) p->work = 0; // revert flag back to working
 }
@@ -359,13 +361,13 @@ s8 parse_file(ctx *ctx)
   DPRINTF("fopen(%s) @%p\n", ctx->word, fp);
   if(!fp)
   {
-    printf("Can't open file %s\n", ctx->word); return -1;
+    fprintf(stderr, "Can't open file %s\n", ctx->word); return -1;
   }
 
   u8 max = MAX_ELEM; // setup on target length
   if(ctx->wlen)
   {
-    max = ctx->wlen; DPRINTF("reading max %d lines\n", max);
+    max = ctx->wlen; DPRINTF("Reading max %d lines\n", max);
   }
 
   // alloc for data indexes
@@ -401,14 +403,14 @@ s8 parse_file(ctx *ctx)
       case HEX: {
         if(len %2 || len < 2) // minimal check on lenght
         {
-          printf("[!] Line %u: lenght must be even! (is:%u)\n%s\n", i +1, len, line);
+          fprintf(stderr, "[!] Line %u: lenght must be even! (is:%u)\n%s\n", i +1, len, line);
           break;
         }
 
         s8 r = scan((u8*)line, &len, IS_HEX, NULL); // check for hex digits
         if(r != -1)
         {
-          printf("[!] Line %u: must contain hexadecimal digits only for HEX mode!\n", i +1);
+          fprintf(stderr, "[!] Line %u: must contain hexadecimal digits only for HEX mode!\n", i +1);
           scan((u8*)line, &len, MARK_ONE, (u8*)&line[(u8)r]); puts("");
           break;
         }
@@ -450,7 +452,7 @@ s8 parse_file(ctx *ctx)
 
     memcpy(p, ctx->word, size);
     free(ctx->word), ctx->word = p; // swap buffers, for word
-    DPRINTF("realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
+    DPRINTF("Realloc word\t@%p %zub, for %u items\n", ctx->word, size, i);
 
     if(i != max)
     {
@@ -460,7 +462,7 @@ s8 parse_file(ctx *ctx)
 
       memcpy(t, ctx->idx, size);
       free(ctx->idx), ctx->idx = t; // swap buffers, for data indexes
-      DPRINTF("realloc %d idx\t@%p %zub\n", i, ctx->idx, size);
+      DPRINTF("Realloc %d idx\t@%p %zub\n", i, ctx->idx, size);
     }
   }
 
@@ -483,7 +485,7 @@ s8 parse_file(ctx *ctx)
 
         if(count > 1) // 2. check if stored charset is unique
         {
-          printf("[!] Line %u: must be unique, found %u repetitions!\n", i +1, count);
+          fprintf(stderr, "[!] Line %u: must be unique, found %u repetitions!\n", i +1, count);
           scan(&p[1], &p[0], MARK_ALL, d); puts("");
           return -1;
         }
@@ -494,11 +496,11 @@ s8 parse_file(ctx *ctx)
 
     if(ctx->out_m == DRY_RUN) printf("[I] Estimated %u combinations\n", estimated);
 
-    if(estimated < ctx->numw) { printf("[E] Requested %u combinations can't be reached!\n", ctx->numw); return -1; }
+    if(estimated < ctx->numw) { fprintf(stderr, "[E] Requested %u combinations can't be reached!\n", ctx->numw); return -1; }
   }
 
   /* Step 4. check if there is interrupted work to resume... */
-  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated from: %s\n", FILESAVE);
+  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated from: '%s'\n", FILESAVE);
 
   return 0;
 }

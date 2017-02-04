@@ -76,7 +76,7 @@ int main(int argc, char **argv)
   DPRINTF("parse_file()\tret:%d\n", job.work);
   if(job.work)
   {
-    printf("[E] Please recheck and pass a valid config file with -c\n");
+    fprintf(stderr, "[E] Please recheck and pass a valid config file with -c\n");
     cleanup(&job); exit(EXIT_FAILURE);
   }
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   if(1) // for verbose
   {
     #ifdef DEBUG
-    DPRINTF("report from main, mode %u\n", job.mode);
+    DPRINTF("Report from main, mode %u\n", job.mode);
     for(u8 i = 0; i < job.wlen; i++)
     {
       p = job.idx[i];
@@ -92,14 +92,14 @@ int main(int argc, char **argv)
       scan(&p[1], &p[0], HEXDUMP, NULL);
     }
     DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
-    DPRINTF("[I] config passed, report data matrix:\n");
+    DPRINTF("[I] Config passed, report data matrix:\n");
     #endif
   }
 
   /* report data matrix */
   if(job.out_m == DRY_RUN)
   {
-    if(job.numw) printf("[I] Requested %u words!\n", job.numw);
+    if(job.numw) fprintf(stderr, "[I] Requested %u words!\n", job.numw);
 
     dump_matrix(&job);
     // in this case word is moved into the last one!
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
   #ifndef DEBUG
   if(job.out_m == QUIET)
   #endif
-    printf("\nforged [%u] combinations\n", c);
+    fprintf(stderr, "\nForged [%u] combinations\n", c);
 
   cleanup(&job);
   p = NULL;
