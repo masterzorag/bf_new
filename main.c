@@ -142,7 +142,17 @@ int main(int argc, char **argv)
         default: break;
       }
 
-      if(job.work == DUMP) dump_matrix(&job); // -USR1 output trigger
+      switch(job.work)
+      {
+        case DUMP:
+          DPRINTF("\nReceived SIGUSR1\n");
+          dump_matrix(&job); // -USR1 output trigger
+          break;
+        case INTR:
+          DPRINTF("\nReceived SIGINT\n");
+          job.work = DONE;
+          break;
+      }
 
       if(job.work == DONE) break;
     }

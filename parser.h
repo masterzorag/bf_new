@@ -57,7 +57,8 @@ enum flags
   QUIET,
   // for signals
   DONE,
-  DUMP
+  DUMP,
+  INTR
 };
 
 void bin2stdout(ctx *p);

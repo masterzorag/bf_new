@@ -21,17 +21,11 @@ static ctx *p = NULL;
 
 static void sig_handler(int signo) // use p to access data
 {
-  if(signo == SIGUSR1) // uses kill -USR1
-  {
-    DPRINTF("received SIGUSR1\n");
-    p->work = DUMP; // dump the ctx, marking current item in charsets
-  }
+  // uses -USR1
+  if(signo == SIGUSR1) p->work = DUMP; // dump the ctx, marking current item in charsets
 
-  if(signo == SIGINT) // grab Ctrl-c
-  {
-    DPRINTF("received SIGINT\n");
-    p->work = DONE;
-  }
+  // grab Ctrl-c
+  if(signo == SIGINT ) p->work = INTR;
 }
 
 
