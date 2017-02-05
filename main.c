@@ -140,29 +140,21 @@ int main(int argc, char **argv)
       {
         case WORDLIST: printf("\n"); break; /* one-per-line output */
         case QUIET:    printf("\r"); break; /* on-same-line output */
-        default: break;
       }
-
-      switch(job.work)
-      {
-        case DUMP:
-          DPRINTF("\nReceived SIGUSR1\n");
-          dump_matrix(&job); // -USR1 output trigger
-          break;
-        case INTR:
-          DPRINTF("\nReceived SIGINT\n");
-          job.work = DONE;
-          break;
-      }
-
-      if(job.work == DONE) break;
     }
 
-    if(job.numw && job.numw == c) { job.work = DONE; break; }
+    if(job.numw && job.numw == c) break;
+
+    if(job.work == DUMP) {
+      DPRINTF("\nReceived SIGUSR1\n"); dump_matrix(&job); // -USR1 output trigger
+    }
+    else if(job.work == INTR) {
+      DPRINTF("\nReceived SIGINT\n"); break;
+    }
 
     change(&job, &n);
 
-    if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
+    if(n < 0) break; // after that, we start increase word lenght!
     /*
       compute which one have to change and eventually continue
       something like n = find(word);
@@ -171,6 +163,7 @@ int main(int argc, char **argv)
 
     c++;             // and keep count
   }
+  job.work = DONE;
 
   #ifndef DEBUG
   if(job.out_m == QUIET)
