@@ -1,6 +1,8 @@
 # bf_new
 the bruteforge rewrite
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
+
 ![shot](https://cloud.githubusercontent.com/assets/8250079/20905459/2829b03e-bb44-11e6-9867-bb87cdc19c01.png)
 
 [Wiki](https://github.com/masterzorag/bf_new/wiki)
