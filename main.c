@@ -76,7 +76,7 @@ int main(int argc, char **argv)
   DPRINTF("parse_file()\tret:%d\n", job.work);
   if(job.work)
   {
-    printf("[E] Please recheck and pass a valid config file with -c\n");
+    fprintf(stderr, "[E] Please recheck and pass a valid config file with -c\n");
     cleanup(&job); exit(EXIT_FAILURE);
   }
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   if(1) // for verbose
   {
     #ifdef DEBUG
-    DPRINTF("report from main, mode %u\n", job.mode);
+    DPRINTF("Report from main, mode %u\n", job.mode);
     for(u8 i = 0; i < job.wlen; i++)
     {
       p = job.idx[i];
@@ -92,19 +92,17 @@ int main(int argc, char **argv)
       scan(&p[1], &p[0], HEXDUMP, NULL);
     }
     DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
-    DPRINTF("[I] config passed, report data matrix:\n");
+    DPRINTF("[I] Config passed, report data matrix:\n");
     #endif
   }
 
   /* report data matrix */
   if(job.out_m == DRY_RUN)
   {
-    if(job.numw) printf("[I] Requested %u words!\n", job.numw);
+    if(job.numw) fprintf(stderr, "[I] Requested %u words!\n", job.numw);
 
     dump_matrix(&job);
     // in this case word is moved into the last one!
-    scan(job.word, &job.wlen, PRINT, NULL); puts(""); // report last possible
-
     cleanup(&job); exit(0);
   }
 
@@ -119,6 +117,7 @@ int main(int argc, char **argv)
   while(1) // break it to exit(DONE)
   {
     #ifdef COUNT
+    if(c == 1) START;
     if(c %COUNT == 0) // output only every COUNT attempt
     #endif
     {
@@ -141,19 +140,21 @@ int main(int argc, char **argv)
       {
         case WORDLIST: printf("\n"); break; /* one-per-line output */
         case QUIET:    printf("\r"); break; /* on-same-line output */
-        default: break;
       }
-
-      if(job.work == DUMP) dump_matrix(&job); // -USR1 output trigger
-
-      if(job.work == DONE) break;
     }
 
-    if(job.numw && job.numw == c) { job.work = DONE; break; }
+    if(job.numw && job.numw == c) break;
+
+    if(job.work == DUMP) {
+      DPRINTF("\nReceived SIGUSR1\n"); dump_matrix(&job); // -USR1 output trigger
+    }
+    else if(job.work == INTR) {
+      DPRINTF("\nReceived SIGINT\n"); break;
+    }
 
     change(&job, &n);
 
-    if(n < 0){ job.work = DONE; break; } // after that, we start increase word lenght!
+    if(n < 0) break; // after that, we start increase word lenght!
     /*
       compute which one have to change and eventually continue
       something like n = find(word);
@@ -162,11 +163,12 @@ int main(int argc, char **argv)
 
     c++;             // and keep count
   }
+  job.work = DONE;
 
   #ifndef DEBUG
   if(job.out_m == QUIET)
   #endif
-    printf("\nforged [%u] combinations\n", c);
+    fprintf(stderr, "\nForged [%u] combinations\n", c);
 
   cleanup(&job);
   p = NULL;

@@ -5,7 +5,7 @@
   bf_new definitions
 */
 
-#define VERSION          "0.2.6"
+#define VERSION          "0.2.7"
 #define FILESAVE      ".bf.save"
 
 #define MAX_ELEM        (256 /8)
@@ -17,8 +17,8 @@
   #define DPRINTF(...)
 #endif
 
-#define MARKER_ON   printf("%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
-#define MARKER_OFF  printf("%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
+#define MARKER_ON   fprintf(stderr, "%c[%d;%d;%dm", 0x1B, 2, 37, 40); // Set MARK on
+#define MARKER_OFF  fprintf(stderr, "%c[%d;%d;%dm", 0x1B, 0, 0, 0);   // Revert back
 
 typedef signed   char s8;
 typedef unsigned char u8;
@@ -57,7 +57,8 @@ enum flags
   QUIET,
   // for signals
   DONE,
-  DUMP
+  DUMP,
+  INTR
 };
 
 void bin2stdout(ctx *p);
