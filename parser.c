@@ -64,7 +64,7 @@ static u8 resume(ctx *p)
   u8 *t = calloc(p->wlen, sizeof(u8));
 
   FILE *fp = fopen(FILESAVE, "r");
-  if(!t || !fp) return 0;
+  if(!t || !fp) goto END;
 
   fseek(fp, 0L, SEEK_END); // check on file size
   long r = ftell(fp);
@@ -77,17 +77,17 @@ static u8 resume(ctx *p)
 
   if(!memcmp(t, p->word, (size_t)p->wlen)) goto END; // check on readed content
 
-  for(u8 i = 0; i < p->wlen; i++) // validate t against indexes
+  for(u8 i = 0; i < p->wlen; i++) // scan indexes
   {
-    if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) goto END;
+    if(scan(&p->idx[i][1], &p->idx[i][0], FIND, &t[i]) < 1) goto END; // validate content
   }
 
   memcpy(p->word, t, (size_t)p->wlen); // passed, resume from saved
   res = n;
 
 END:
-  fclose(fp), fp = NULL;
-  free(t), t = NULL;
+  if(fp) fclose(fp), fp = NULL;
+  if(t) free(t), t = NULL;
   return res;
 }
 
