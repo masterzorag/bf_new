@@ -348,8 +348,9 @@ void dump_matrix(ctx *p)
   }
   else free(t2), t2 = NULL;
 
-
   if(p->work == DUMP) p->work = 0; // revert flag back to working
+
+  fflush(stderr);
 }
 
 

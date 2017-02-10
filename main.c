@@ -163,7 +163,8 @@ int main(int argc, char **argv)
 
     c++;             // and keep count
   }
-  job.work = DONE;
+
+  fflush(stdout), job.work = DONE;
 
   #ifndef DEBUG
   if(job.out_m == QUIET)
