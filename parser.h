@@ -61,8 +61,8 @@ enum flags
   INTR
 };
 
-void bin2stdout(ctx *p);
-void dump_matrix(ctx *p);
+void bin2stdout(ctx * const p);
+void dump_matrix(ctx * const p);
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);

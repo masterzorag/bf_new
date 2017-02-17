@@ -22,7 +22,7 @@
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
-static void change(ctx *ctx, s8 *i)
+static void change(ctx * const ctx, s8 *i)
 {
   u8 *p, *d;
 

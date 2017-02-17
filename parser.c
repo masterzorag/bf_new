@@ -33,7 +33,7 @@ static u8 *_x_to_u8_buffer(const char *hex)
 //  if(len % 2 != 0) return NULL; // (add sanity check in caller)
 
   char xtmp[3] = {0, 0, 0};
-  u8 *res = (u8*)malloc(sizeof(u8) * len);
+  u8 *res = malloc(sizeof(u8) * len);
   u8 *ptr = res;
 
   while(len--){
@@ -46,7 +46,7 @@ static u8 *_x_to_u8_buffer(const char *hex)
 
 
 // wrapper to bin write to STDOUT
-void bin2stdout(ctx *p)
+void bin2stdout(ctx * const p)
 {
   ssize_t n = write(STDOUT_FILENO, p->word, p->wlen);
 
@@ -58,7 +58,7 @@ void bin2stdout(ctx *p)
 
 
 // actually we resume on parse_file()
-static u8 resume(ctx *p)
+static u8 resume(ctx * const p)
 {
   u8 res = 0;
   u8 *t = calloc(p->wlen, sizeof(u8));
@@ -93,7 +93,7 @@ END:
 
 
 // actually we save on cleanup()
-static size_t save(ctx *p)
+static size_t save(ctx * const p)
 {
   FILE *fp = fopen(FILESAVE, "w");
   if(!fp) return 0;
@@ -107,7 +107,7 @@ static size_t save(ctx *p)
 
 
 // wrapper to release allocated ctx memory
-void cleanup(ctx *p)
+void cleanup(ctx * const p)
 {
   /* save last generated, to resume on next run
      note: in a completed run, word is turned into the first one by change()! */
@@ -158,6 +158,7 @@ static void help()
 
 
 /*
+  Reset and setup terminal encoding:
   unset LANG LC_ALL; LC_CTYPE=en_US.iso88591 export LC_CTYPE
 */
 /* Locale initiator, -1 ok, 0 on error */
@@ -245,7 +246,7 @@ ERR:
 
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 {
-  u8 *p = (u8*)item;
+  const u8 *p = item;
   s8 ret = -1;
 
   for(u8 i = 0; i < *l; i++)
@@ -298,7 +299,7 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 
 /* Marked matrix dumper
    used just on DRY_RUN, or triggered by -USR1 signal */
-void dump_matrix(ctx *p)
+void dump_matrix(ctx * const p)
 {
   scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
 
@@ -307,13 +308,14 @@ void dump_matrix(ctx *p)
   char *t = calloc(max +1,  sizeof(char)); // bounder line
   u8  *t2 = calloc(p->wlen, sizeof(u8));   // to store last one
 
-  if(!t || !t2) fprintf(stderr, "error");
+  if(!t || !t2) { fprintf(stderr, "error"); abort(); }
 
   memset(t, '-', max);
   fprintf(stderr, "%s\n", t);
 
+  const u8 *d = NULL;
+  u8 row = 0;
   max = 1;
-  u8 row = 0, *d = NULL;
   while(row < max)
   {
   //DPRINTF("row %d, max %zu\n", row, max);
