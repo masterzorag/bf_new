@@ -65,8 +65,7 @@ int main(int argc, char **argv)
     else break;
   }
 
-  free(a);
-  a = NULL;
+  free(a), a = NULL;
 
   return 0;
 }

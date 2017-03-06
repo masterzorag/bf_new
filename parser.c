@@ -232,7 +232,7 @@ ERR:
     }
 
   /* accept just one output flag! */
-  if(flag_err > 1) { fprintf(stderr, "[E] flags -b, -w, -q, are mutually exclusive\n"); return -1; }
+  if(flag_err > 1) { fprintf(stderr, "[E] flags -b, -w, -q are mutually exclusive\n"); return -1; }
 
   DPRINTF("wlen = %d, mode = %d, filename = %s, bin = %u, n = %d\n",
     ctx->wlen, ctx->mode, ctx->word, ctx->out_m, ctx->numw);
@@ -501,7 +501,7 @@ s8 parse_file(ctx *ctx)
   }
 
   /* Step 4. check if there is interrupted work to resume... */
-  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming last generated from: '%s'\n", FILESAVE);
+  if(resume(ctx) && ctx->out_m == DRY_RUN) printf("[I] Filesave detected! Resuming from '%s'\n", FILESAVE);
 
   return 0;
 }

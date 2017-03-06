@@ -10,6 +10,9 @@
   Checked 75484 items
   or,
   $ cut -c 1-20 /dev/urandom | ./scan_matrix_demo
+  [30130.22/sec]
+  [30074.36/sec]
+  0324c53296690a1e3d81c893552fdcaea446ff90 -> 4/20 @829
 */
 
 #include <stdio.h>
@@ -131,12 +134,10 @@ int main(int argc, char **argv)
     size = read(STDIN_FILENO, p, DATA_LEN); // read data
 
     if(size == DATA_LEN)
-    { //    printf("readed %zu items\n", size);
-
-      // do stuff with p, for example: rx = p x G
-      //print_cmp(p, M + (1 * DATA_LEN));
-
+    { // printf("readed %zu items\n", size);
+      // do stuff with p, for example: R = p x G
       best = matrix_traverse(M, p);
+
       if(best > -1)
       {  //if(memcmp(p, M + (i * 20), 20) == 0) {
         res = print_cmp(p, M + (best * DATA_LEN));
