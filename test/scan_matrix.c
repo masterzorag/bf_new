@@ -21,7 +21,7 @@
 
 #define FILENAME   "../r.bin" // data matrix
 #define DATA_LEN   20
-#define MIN_MATCH  4
+#define MIN_MATCH   4
 
 
 #include <time.h>
@@ -118,12 +118,40 @@ static signed int matrix_traverse(unsigned char * const M, unsigned char * const
   return last;
 }
 
+/*
+  Dump single record from matrix
+*/
+static void matrix_read(unsigned char * const M, const int num)
+{
+  if(num > num_matrix_entries) return;
+
+  unsigned char * const p = M + (num * DATA_LEN);
+
+  for(int i = 0; i < DATA_LEN; i++)
+    printf("%.2x", *(p + i));
+
+  puts("");
+}
+
+/*
+  Dump entire matrix
+*/
+static void matrix_dump(unsigned char * const M)
+{
+  printf("data matrix @%p storing %d records\n", M, num_matrix_entries);
+
+  for(int i = 0; i < num_matrix_entries; i++) // scan matrix
+    matrix_read(M, i);
+}
+
 
 int main(int argc, char **argv)
 {
   unsigned char *M = matrix_load(),
                 *p = calloc(DATA_LEN, sizeof(unsigned char));
   if(!M || !p) exit(-1);
+
+//matrix_dump(M); exit(0);
 
   signed int best, res;
   unsigned int count = 0;
@@ -158,25 +186,14 @@ int main(int argc, char **argv)
         START;
       }
 
-     // for(int i = 0; i < DATA_LEN; i++) printf("%.2x", *(M + i));
-     // puts("");
       count++;
     }
     else break;
   }
   printf("Checked %d items\n", count); // done
 
-  if(0)
-  {
-    for(int i = 0; i < num_matrix_entries; i++) // scan matrix
-    {
-      if(i %DATA_LEN == 0) puts("");
+  matrix_read(M, best);
 
-      printf("%.2x", M[i]); // dump
-    }
-  }
-
-  //printf("\n@%p %d\n", M, num_matrix_entries);
   free(M), M = NULL;
   free(p), p = NULL;
 
