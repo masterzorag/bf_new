@@ -301,6 +301,8 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
    used just on DRY_RUN, or triggered by -USR1 signal */
 void dump_matrix(ctx * const p)
 {
+  fflush(stderr);
+
   scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
 
   // setup a bounder line
@@ -351,8 +353,6 @@ void dump_matrix(ctx * const p)
   else free(t2), t2 = NULL;
 
   if(p->work == DUMP) p->work = 0; // revert flag back to working
-
-  fflush(stderr);
 }
 
 
