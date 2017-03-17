@@ -78,11 +78,12 @@ static signed char user_memcmp_v2(const unsigned char * const a, const unsigned 
 
   if(count != DATA_LEN)
   {
-    if(count >= MIN_MATCH) return count;
-
-    return -1;
+    if(count >= MIN_MATCH)
+      return count;
+    else
+      return -1;
   }
-  return 0;
+  else return 0; // whole match
 }
 
 static char print_cmp(const unsigned char * const a, const unsigned char * const b)
@@ -106,13 +107,13 @@ static char print_cmp(const unsigned char * const a, const unsigned char * const
 */
 static signed int matrix_traverse(unsigned char * const M, unsigned char * const p)
 {
-  signed int last, res;
-  last = res = -1;
+  signed int last, res, best;
+  best = last = res = -1;
   for(int i = 0; i < num_matrix_entries; i++) // ensure we scan whole table
   {
     res = user_memcmp_v2(p, M + (i * DATA_LEN));
 
-    if(res != -1) last = i; // report the last best found
+    if(res > best) last = i, best = res; // report the last best found
   }
   return last;
 }
