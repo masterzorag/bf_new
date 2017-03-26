@@ -5,7 +5,7 @@
   bf_new definitions
 */
 
-#define VERSION          "0.2.7"
+#define VERSION          "0.2.8"
 #define FILESAVE      ".bf.save"
 
 #define MAX_ELEM        (256 /8)
@@ -61,8 +61,8 @@ enum flags
   INTR
 };
 
-void bin2stdout(ctx *p);
-void dump_matrix(ctx *p);
+void bin2stdout(ctx * const p);
+void dump_matrix(ctx * const p);
 void cleanup(ctx *p);
 s8 parse_opt (int argc, char **argv, ctx *ctx);
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst);

@@ -22,7 +22,7 @@
   #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
-static void change(ctx *ctx, s8 *i)
+static void change(ctx * const ctx, s8 *i)
 {
   u8 *p, *d;
 
@@ -163,7 +163,8 @@ int main(int argc, char **argv)
 
     c++;             // and keep count
   }
-  job.work = DONE;
+
+  fflush(stdout), job.work = DONE;
 
   #ifndef DEBUG
   if(job.out_m == QUIET)
