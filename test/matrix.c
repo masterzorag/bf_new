@@ -63,7 +63,7 @@ static void *matrix_load()
 }
 
 /*
-  Leftwise min data compare, return:
+  Leftmost min data compare, return:
   0 for whole matches,
   -1 if less than MIN_MATCH,
   else num of matching bytes
@@ -105,7 +105,7 @@ static char print_cmp(const unsigned char * const a, const unsigned char * const
   best match honoring MIN_MATCH,
   else -1
 */
-static signed int matrix_traverse(unsigned char * const M, unsigned char * const p)
+static signed int matrix_scan(unsigned char * const M, unsigned char * const p)
 {
   signed int best, last, res;
   best = last = res = -1;
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     if(size == DATA_LEN)
     { // printf("readed %zu items\n", size);
       // do stuff with p, for example: R = p x G
-      best = matrix_traverse(M, p);
+      best = matrix_scan(M, p);
 
       if(best > -1)
       {  //if(memcmp(p, M + (i * 20), 20) == 0) {
