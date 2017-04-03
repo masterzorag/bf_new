@@ -19,7 +19,7 @@
   clock_t startm, stopm;
   #define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
   #define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
-  #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
+  #define PTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
 static void change(ctx * const ctx, s8 *i)
@@ -130,7 +130,6 @@ int main(int argc, char **argv)
       #ifdef COUNT // print timing info
       {
         STOP;
-        PRINTTIME;
         printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
         START;
       }
