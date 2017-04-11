@@ -19,12 +19,9 @@ static ctx *p = NULL;
 }*/
 
 
-static void sig_handler(int signo) // use p to access data
+static void sig_handler(int signo) // use p to access whole ctx data
 {
-  // uses -USR1
   if(signo == SIGUSR1) p->work = DUMP; // dump the ctx, marking current item in charsets
-
-  // grab Ctrl-c
   if(signo == SIGINT ) p->work = INTR;
 }
 
@@ -33,9 +30,8 @@ void setup_signals(ctx *ctx)
 {
   p = ctx; // address p
 
-  if(ctx->out_m == QUIET) fprintf(stderr, "send 'kill -USR1 %d' from another terminal to dump\n", getpid());
+  if(ctx->out_m == QUIET) fprintf(stderr, "Send 'kill -USR1 %d' from another terminal to dump\n", getpid());
 
-  if(signal(SIGUSR1, sig_handler) == SIG_ERR) fprintf(stderr, "\ncan't catch SIGUSR1\n");
-
-  if(signal(SIGINT,  sig_handler) == SIG_ERR) fprintf(stderr, "\ncan't catch SIGINT\n");
+  if(signal(SIGUSR1, sig_handler) == SIG_ERR) fprintf(stderr, "\nCan't catch SIGUSR1\n");
+  if(signal(SIGINT,  sig_handler) == SIG_ERR) fprintf(stderr, "\nCan't catch SIGINT\n");
 }

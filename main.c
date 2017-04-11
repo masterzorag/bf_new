@@ -10,7 +10,6 @@
 #include "parser.h"
 #include "signal.h"
 
-
 //#define COUNT  (1000000 *5) // enables timing info
 
 
@@ -19,7 +18,7 @@
   clock_t startm, stopm;
   #define START if((startm = clock()) == -1){ printf("Error calling clock"); exit(1); }
   #define STOP  if((stopm  = clock()) == -1){ printf("Error calling clock"); exit(1); }
-  #define PRINTTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
+  #define PTIME printf( "%6.3f seconds", ((double)stopm - startm) /CLOCKS_PER_SEC);
 #endif
 
 static void change(ctx * const ctx, s8 *i)
@@ -65,44 +64,37 @@ int main(int argc, char **argv)
   job.wlen = 0;
   job.out_m = DRY_RUN; // default
 
-  job.work = parse_opt(argc, argv, &job);
-  DPRINTF("parse_opt()\tret:%d\n", job.work);
-  if(job.work)
+  for(u8 i = 0; i < 2; i++) // do two checks
   {
-    cleanup(&job); exit(EXIT_FAILURE);
-  }
-
-  job.work = parse_file(&job);
-  DPRINTF("parse_file()\tret:%d\n", job.work);
-  if(job.work)
-  {
-    fprintf(stderr, "[E] Please recheck and pass a valid config file with -c\n");
-    cleanup(&job); exit(EXIT_FAILURE);
+    switch(i)
+    {
+        case 0: job.work = parse_opt(argc, argv, &job); break;
+        case 1: job.work = parse_file(&job);            break;
+    }
+    if(job.work) { cleanup(&job); exit(EXIT_FAILURE); }
   }
 
   u8 *p = NULL;
-  if(1) // for verbose
+
+  #ifdef DEBUG
+  DPRINTF("Report from main, mode %u\n", job.mode);
+  for(u8 i = 0; i < job.wlen; i++)
   {
-    #ifdef DEBUG
-    DPRINTF("Report from main, mode %u\n", job.mode);
-    for(u8 i = 0; i < job.wlen; i++)
-    {
-      p = job.idx[i];
-      DPRINTF("idx %2d/%.2d @%p:\t%d items\n", i, job.wlen, p, p[0]);
-      scan(&p[1], &p[0], HEXDUMP, NULL);
-    }
-    DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
-    DPRINTF("[I] Config passed, report data matrix:\n");
-    #endif
+    p = job.idx[i];
+    DPRINTF("idx %2d/%.2d @%p:\t%d items\n", i, job.wlen, p, p[0]);
+    scan(&p[1], &p[0], HEXDUMP, NULL);
   }
+  DPRINTF("%zub %zub\n", sizeof(ctx), sizeof(void*));
+  DPRINTF("[I] Config passed, report data matrix:\n");
+  #endif
 
   /* report data matrix */
   if(job.out_m == DRY_RUN)
   {
     if(job.numw) fprintf(stderr, "[I] Requested %u words!\n", job.numw);
 
-    dump_matrix(&job);
-    // in this case word is moved into the last one!
+    dump_matrix(&job); // in this case word is moved into the last one!
+
     cleanup(&job); exit(0);
   }
 
@@ -121,26 +113,22 @@ int main(int argc, char **argv)
     if(c %COUNT == 0) // output only every COUNT attempt
     #endif
     {
-      switch(job.out_m)
-      {
-        case BIN: bin2stdout(&job); break;                /* bin to STDOUT,   mode based */
-        default:  scan(p, &job.wlen, PRINT, NULL); break; /* standard output, mode based */
-      }
+      if(job.out_m == BIN)
+        bin2stdout(&job);                  /* bin to STDOUT,   mode based */
+      else
+        scan(p, &job.wlen, PRINT, stdout); /* standard output, mode based */
 
       #ifdef COUNT // print timing info
       {
         STOP;
-        PRINTTIME;
         printf(" [%.2f/sec]", COUNT /(((double)stopm - startm) /CLOCKS_PER_SEC));
         START;
       }
       #endif
 
-      switch(job.out_m)
-      {
-        case WORDLIST: printf("\n"); break; /* one-per-line output */
-        case QUIET:    printf("\r"); break; /* on-same-line output */
-      }
+      if(job.out_m == WORDLIST) printf("\n"); /* one-per-line output */
+      else
+      if(job.out_m == QUIET)    printf("\r"); /* on-same-line output */
     }
 
     if(job.numw && job.numw == c) break;
@@ -156,7 +144,7 @@ int main(int argc, char **argv)
 
     if(n < 0) break; // after that, we start increase word lenght!
     /*
-      compute which one have to change and eventually continue
+      Compute which one have to change and eventually continue
       something like n = find(word);
     */
     n = job.wlen -1; // reset n to rightmost one
