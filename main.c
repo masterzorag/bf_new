@@ -117,7 +117,7 @@ int main(int argc, char **argv)
       if(job.out_m == BIN)
         bin2stdout(&job);                /* bin to STDOUT,   mode based */
       else
-        scan(p, &job.wlen, PRINT, NULL); /* standard output, mode based */
+        scan(p, &job.wlen, PRINT, stdout); /* standard output, mode based */
 
       #ifdef COUNT // print timing info
       {

@@ -243,7 +243,12 @@ ERR:
   return 0;
 }
 
-
+/*
+  scan modes:
+  PRINT and HEXDUMP can switch STDOUT/STDERR via *dst
+  MARK_ONE and MARK_ALL prints to STDOUT
+  IS_HEX, FIND and COUNT does not prints but returns values
+*/
 s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 {
   const u8 *p = item;
@@ -254,8 +259,8 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
     switch(smode)
     {
       case PRINT:
-        if(opmode == CHAR) printf("%c",   *p);
-        else               printf("%.2x", *p);
+        if(opmode == CHAR) fprintf(dst, "%c",   *p);
+        else               fprintf(dst, "%.2x", *p);
         break;
 
       case IS_HEX: if(!isxdigit(*p)) return i;
@@ -297,13 +302,19 @@ s8 scan(const u8 *item, const u8 *l, const u8 smode, const u8 *dst)
 }
 
 
-/* Marked matrix dumper
-   used just on DRY_RUN, or triggered by -USR1 signal */
+/*
+  Marked matrix dumper
+  used just on DRY_RUN, or triggered by -USR1 signal
+  This can be used by bash redirection, for example:
+  $ ./bf -c test/test_3.HEX -x -q 2>.bf.stderr
+  then:
+  $ cat .bf.stderr
+*/
 void dump_matrix(ctx * const p)
 {
-  fflush(stderr);
+  fflush(stdout);
 
-  scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report current
+  scan(p->word, &p->wlen, PRINT, stderr); fprintf(stderr, "\n"); // report current
 
   // setup a bounder line
   size_t max = sizeof(char) * p->wlen *3;
@@ -348,7 +359,7 @@ void dump_matrix(ctx * const p)
   {
   //DPRINTF("%p %p %p\n", p, p->word, &p->word);
     free(p->word), p->word = t2;
-    scan(p->word, &p->wlen, PRINT, NULL); puts(""); // report last
+    scan(p->word, &p->wlen, PRINT, stderr); fprintf(stderr, "\n"); // report last
   }
   else free(t2), t2 = NULL;
 
