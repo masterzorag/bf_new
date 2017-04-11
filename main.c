@@ -10,7 +10,6 @@
 #include "parser.h"
 #include "signal.h"
 
-
 //#define COUNT  (1000000 *5) // enables timing info
 
 
@@ -115,7 +114,7 @@ int main(int argc, char **argv)
     #endif
     {
       if(job.out_m == BIN)
-        bin2stdout(&job);                /* bin to STDOUT,   mode based */
+        bin2stdout(&job);                  /* bin to STDOUT,   mode based */
       else
         scan(p, &job.wlen, PRINT, stdout); /* standard output, mode based */
 
@@ -145,7 +144,7 @@ int main(int argc, char **argv)
 
     if(n < 0) break; // after that, we start increase word lenght!
     /*
-      compute which one have to change and eventually continue
+      Compute which one have to change and eventually continue
       something like n = find(word);
     */
     n = job.wlen -1; // reset n to rightmost one

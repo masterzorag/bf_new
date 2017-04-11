@@ -45,7 +45,7 @@ static u8 *_x_to_u8_buffer(const char *hex)
 }
 
 
-// wrapper to bin write to STDOUT
+// Wrapper to bin write to STDOUT
 void bin2stdout(ctx * const p)
 {
   ssize_t n = write(STDOUT_FILENO, p->word, p->wlen);
@@ -57,7 +57,7 @@ void bin2stdout(ctx * const p)
 }
 
 
-// actually we resume on parse_file()
+// Actually we resume on parse_file()
 static u8 resume(ctx * const p)
 {
   u8 res = 0;
@@ -92,7 +92,7 @@ END:
 }
 
 
-// actually we save on cleanup()
+// Actually we save on cleanup()
 static size_t save(ctx * const p)
 {
   FILE *fp = fopen(FILESAVE, "w");
@@ -106,7 +106,7 @@ static size_t save(ctx * const p)
 }
 
 
-// wrapper to release allocated ctx memory
+// Wrapper to safely release allocated ctx memory
 void cleanup(ctx * const p)
 {
   /* save last generated, to resume on next run
@@ -244,7 +244,7 @@ ERR:
 }
 
 /*
-  scan modes:
+  Scan modes:
   PRINT and HEXDUMP can switch STDOUT/STDERR via *dst
   MARK_ONE and MARK_ALL prints to STDOUT
   IS_HEX, FIND and COUNT does not prints but returns values
